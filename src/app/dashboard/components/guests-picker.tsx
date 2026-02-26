@@ -113,7 +113,7 @@ export function GuestsPicker({ guests, onGuestsChange }: GuestsPickerProps) {
       <button
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
-        className="flex items-center gap-3 px-4 py-2.5 bg-white border border-neutral-200 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer min-w-[170px] min-h-[48px]"
+        className="flex items-center gap-2 px-3 lg:px-4 py-2.5 bg-white border border-neutral-200 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer w-full lg:min-w-[170px] min-h-[48px]"
       >
         <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center shrink-0">
           <svg className="w-4 h-4 text-neutral-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">

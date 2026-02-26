@@ -180,7 +180,7 @@ export function ExploreMap() {
         {/* Search controls — stacked on mobile, row on desktop */}
         <div className="flex flex-col lg:flex-row lg:items-start gap-2 lg:gap-3">
           <CitySearch onPlaceSelect={handlePlaceSelect} />
-          <div className="flex gap-2 lg:gap-3">
+          <div className="grid grid-cols-2 lg:flex gap-2 lg:gap-3">
             <DatePicker checkIn={checkIn} checkOut={checkOut} onDatesChange={handleDatesChange} />
             <GuestsPicker guests={guests} onGuestsChange={setGuests} />
           </div>
