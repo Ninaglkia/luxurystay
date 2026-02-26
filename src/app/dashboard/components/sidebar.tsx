@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+
+interface SidebarProps {
+  userName: string;
+  avatarUrl: string | null;
+}
 
 const navItems = [
   {
@@ -42,8 +48,25 @@ const navItems = [
   },
 ];
 
-export function Sidebar() {
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+export function Sidebar({ userName, avatarUrl }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const supabase = createClient();
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
+  }
 
   return (
     <aside className="hidden lg:flex lg:flex-col w-64 bg-white border-r border-neutral-200">
@@ -54,8 +77,32 @@ export function Sidebar() {
         </Link>
       </div>
 
+      {/* User name — clickable → profile dashboard */}
+      <Link
+        href="/dashboard/settings"
+        className="flex items-center gap-3 mx-3 mt-4 mb-2 px-3 py-2.5 rounded-lg hover:bg-neutral-100 transition-colors group"
+      >
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt={userName}
+            className="w-9 h-9 rounded-full object-cover shrink-0"
+          />
+        ) : (
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shrink-0">
+            <span className="text-xs font-bold text-white">{getInitials(userName)}</span>
+          </div>
+        )}
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-neutral-900 truncate">{userName}</p>
+          <p className="text-xs text-neutral-400 group-hover:text-neutral-500 transition-colors">Vedi profilo</p>
+        </div>
+      </Link>
+
+      <div className="h-px bg-neutral-200 mx-6 my-1" />
+
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className="flex-1 px-3 py-3 space-y-1">
         {navItems.map((item) => {
           const isActive =
             item.href === "/dashboard"
@@ -79,8 +126,8 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Bottom section */}
-      <div className="px-3 py-4 border-t border-neutral-200">
+      {/* Bottom: Impostazioni + Esci */}
+      <div className="px-3 py-3 border-t border-neutral-200 space-y-1">
         <Link
           href="/dashboard/settings"
           className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
@@ -95,6 +142,15 @@ export function Sidebar() {
           </svg>
           Impostazioni
         </Link>
+        <button
+          onClick={handleSignOut}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15" />
+          </svg>
+          Esci
+        </button>
       </div>
     </aside>
   );

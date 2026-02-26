@@ -17,12 +17,16 @@ export default async function DashboardLayout({
     redirect("/");
   }
 
+  const displayName =
+    user.user_metadata?.full_name || user.email?.split("@")[0] || "Utente";
+  const avatarUrl = user.user_metadata?.avatar_url ?? null;
+
   return (
     <div className="min-h-screen bg-neutral-50 flex">
-      <Sidebar />
+      <Sidebar userName={displayName} avatarUrl={avatarUrl} />
       <div className="flex-1 flex flex-col min-w-0">
         <Header user={user} />
-        <main className="flex-1 p-4 lg:p-8 overflow-hidden">{children}</main>
+        <main className="flex-1 p-4 lg:p-8 overflow-y-auto">{children}</main>
       </div>
     </div>
   );
