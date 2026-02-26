@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { APIProvider, Map, useMap } from "@vis.gl/react-google-maps";
 import { CitySearch } from "./city-search";
+import { DatePicker } from "./date-picker";
+import { GuestsPicker, type GuestsCount } from "./guests-picker";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
@@ -137,6 +139,9 @@ function MyLocationButton() {
 export function ExploreMap() {
   const [target, setTarget] = useState<{ lat: number; lng: number } | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [checkIn, setCheckIn] = useState<Date | null>(null);
+  const [checkOut, setCheckOut] = useState<Date | null>(null);
+  const [guests, setGuests] = useState<GuestsCount>({ adults: 0, children: 0, infants: 0, pets: 0 });
 
   const handlePlaceSelect = useCallback(
     (location: { lat: number; lng: number; name: string }) => {
@@ -145,6 +150,11 @@ export function ExploreMap() {
     },
     []
   );
+
+  function handleDatesChange(newCheckIn: Date | null, newCheckOut: Date | null) {
+    setCheckIn(newCheckIn);
+    setCheckOut(newCheckOut);
+  }
 
   if (!GOOGLE_MAPS_API_KEY) {
     return (
@@ -166,12 +176,16 @@ export function ExploreMap() {
     <APIProvider apiKey={GOOGLE_MAPS_API_KEY} libraries={["places"]}>
       <div className="flex-1 flex flex-col gap-4">
         {/* Search bar */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-start gap-3">
           <CitySearch onPlaceSelect={handlePlaceSelect} />
+          <DatePicker checkIn={checkIn} checkOut={checkOut} onDatesChange={handleDatesChange} />
+          <GuestsPicker guests={guests} onGuestsChange={setGuests} />
           {selectedCity && (
-            <span className="text-sm text-neutral-500">
-              📍 {selectedCity}
-            </span>
+            <div className="flex items-center self-center">
+              <span className="text-sm text-neutral-500">
+                📍 {selectedCity}
+              </span>
+            </div>
           )}
         </div>
 
