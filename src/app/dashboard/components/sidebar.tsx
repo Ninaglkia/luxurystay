@@ -99,6 +99,19 @@ export function Sidebar({ userName, avatarUrl }: SidebarProps) {
         </div>
       </Link>
 
+      {/* Add property CTA */}
+      <div className="px-3 mt-2 mb-3">
+        <Link
+          href="/dashboard/add-property"
+          className="flex items-center gap-2 w-full px-3 py-2.5 bg-neutral-900 text-white rounded-lg text-sm font-medium hover:bg-neutral-800 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          Aggiungi immobile
+        </Link>
+      </div>
+
       <div className="h-px bg-neutral-200 mx-6 my-1" />
 
       {/* Navigation */}
