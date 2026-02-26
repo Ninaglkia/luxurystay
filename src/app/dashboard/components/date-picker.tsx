@@ -8,14 +8,18 @@ interface DatePickerProps {
   onDatesChange: (checkIn: Date | null, checkOut: Date | null) => void;
 }
 
-const DAYS = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
+const DAYS = ["L", "M", "M", "G", "V", "S", "D"];
 const MONTHS = [
   "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
   "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre",
 ];
 
 function isSameDay(a: Date, b: Date) {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
 }
 
 function isInRange(date: Date, start: Date | null, end: Date | null) {
@@ -34,7 +38,15 @@ function formatDate(date: Date | null) {
   return date.toLocaleDateString("it-IT", { day: "numeric", month: "short" });
 }
 
-function CalendarMonth({ year, month, checkIn, checkOut, hoverDate, onDateClick, onDateHover }: {
+function CalendarMonth({
+  year,
+  month,
+  checkIn,
+  checkOut,
+  hoverDate,
+  onDateClick,
+  onDateHover,
+}: {
   year: number;
   month: number;
   checkIn: Date | null;
@@ -44,15 +56,13 @@ function CalendarMonth({ year, month, checkIn, checkOut, hoverDate, onDateClick,
   onDateHover: (date: Date | null) => void;
 }) {
   const firstDay = new Date(year, month, 1);
-  // Monday = 0, Sunday = 6
   let startDay = firstDay.getDay() - 1;
   if (startDay < 0) startDay = 6;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
   const cells = [];
-  // Empty cells before first day
   for (let i = 0; i < startDay; i++) {
-    cells.push(<div key={`empty-${i}`} />);
+    cells.push(<div key={`empty-${i}`} className="aspect-square" />);
   }
 
   for (let day = 1; day <= daysInMonth; day++) {
@@ -62,40 +72,42 @@ function CalendarMonth({ year, month, checkIn, checkOut, hoverDate, onDateClick,
     const isCheckOut = checkOut && isSameDay(date, checkOut);
     const isSelected = isCheckIn || isCheckOut;
 
-    // Show range: either confirmed range or hover preview
-    const rangeEnd = checkOut || (checkIn && hoverDate && hoverDate > checkIn ? hoverDate : null);
+    const rangeEnd =
+      checkOut || (checkIn && hoverDate && hoverDate > checkIn ? hoverDate : null);
     const inRange = isInRange(date, checkIn, rangeEnd);
 
     cells.push(
-      <button
-        key={day}
-        disabled={past}
-        onClick={() => !past && onDateClick(date)}
-        onMouseEnter={() => !past && onDateHover(date)}
-        onMouseLeave={() => onDateHover(null)}
-        className={`
-          relative h-10 w-10 text-sm rounded-full transition-all cursor-pointer
-          ${past ? "text-neutral-300 cursor-not-allowed" : "hover:border hover:border-neutral-900"}
-          ${isSelected ? "bg-neutral-900 text-white font-semibold" : ""}
-          ${inRange ? "bg-neutral-100 rounded-none" : ""}
-          ${isCheckIn && (checkOut || (hoverDate && hoverDate > checkIn)) ? "rounded-r-none" : ""}
-          ${isCheckOut || (isCheckIn && !checkOut && !hoverDate) ? "" : ""}
-          ${(isCheckOut || (hoverDate && checkIn && !checkOut && isSameDay(date, hoverDate))) ? "rounded-l-none" : ""}
-        `}
-      >
-        {day}
-      </button>
+      <div key={day} className="aspect-square flex items-center justify-center">
+        <button
+          disabled={past}
+          onClick={() => !past && onDateClick(date)}
+          onMouseEnter={() => !past && onDateHover(date)}
+          onMouseLeave={() => onDateHover(null)}
+          className={`
+            w-full h-full flex items-center justify-center text-[13px] transition-all
+            ${past ? "text-neutral-200 cursor-default" : "cursor-pointer"}
+            ${!past && !isSelected && !inRange ? "hover:bg-neutral-100 rounded-full" : ""}
+            ${isSelected ? "bg-neutral-900 text-white font-semibold rounded-full" : ""}
+            ${inRange ? "bg-neutral-100" : ""}
+          `}
+        >
+          {day}
+        </button>
+      </div>
     );
   }
 
   return (
-    <div>
-      <h3 className="text-sm font-semibold text-neutral-900 text-center mb-3">
+    <div className="w-full">
+      <h3 className="text-sm font-semibold text-neutral-900 text-center mb-4">
         {MONTHS[month]} {year}
       </h3>
-      <div className="grid grid-cols-7 gap-y-1 justify-items-center">
-        {DAYS.map((d) => (
-          <div key={d} className="h-8 w-10 flex items-center justify-center text-xs font-medium text-neutral-400">
+      <div className="grid grid-cols-7">
+        {DAYS.map((d, i) => (
+          <div
+            key={`${d}-${i}`}
+            className="aspect-square flex items-center justify-center text-[11px] font-semibold text-neutral-400"
+          >
             {d}
           </div>
         ))}
@@ -131,7 +143,6 @@ export function DatePicker({ checkIn, checkOut, onDatesChange }: DatePickerProps
       setSelecting("checkOut");
     } else {
       if (checkIn && date <= checkIn) {
-        // If selected date is before checkIn, restart
         onDatesChange(date, null);
         setSelecting("checkOut");
       } else {
@@ -150,7 +161,9 @@ export function DatePicker({ checkIn, checkOut, onDatesChange }: DatePickerProps
   function nextMonth() {
     setViewMonth((prev) => {
       const next = prev.month + 1;
-      return next > 11 ? { year: prev.year + 1, month: 0 } : { year: prev.year, month: next };
+      return next > 11
+        ? { year: prev.year + 1, month: 0 }
+        : { year: prev.year, month: next };
     });
   }
 
@@ -161,97 +174,160 @@ export function DatePicker({ checkIn, checkOut, onDatesChange }: DatePickerProps
     if (viewCurrent <= currentMonth) return;
     setViewMonth((prev) => {
       const next = prev.month - 1;
-      return next < 0 ? { year: prev.year - 1, month: 11 } : { year: prev.year, month: next };
+      return next < 0
+        ? { year: prev.year - 1, month: 11 }
+        : { year: prev.year, month: next };
     });
   }
 
-  const secondMonth = viewMonth.month + 1 > 11
-    ? { year: viewMonth.year + 1, month: 0 }
-    : { year: viewMonth.year, month: viewMonth.month + 1 };
+  const secondMonth =
+    viewMonth.month + 1 > 11
+      ? { year: viewMonth.year + 1, month: 0 }
+      : { year: viewMonth.year, month: viewMonth.month + 1 };
+
+  const nights =
+    checkIn && checkOut
+      ? Math.ceil(
+          (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)
+        )
+      : null;
 
   return (
     <div ref={ref} className="relative">
+      {/* Trigger button */}
       <div className="flex border border-neutral-200 rounded-xl overflow-hidden bg-white shadow-sm">
-        {/* Check-in */}
         <button
-          onClick={() => { setIsOpen(true); setSelecting("checkIn"); }}
+          onClick={() => {
+            setIsOpen(true);
+            setSelecting("checkIn");
+          }}
           className={`flex-1 px-4 py-3 text-left cursor-pointer transition-colors ${
-            isOpen && selecting === "checkIn" ? "bg-neutral-50" : "hover:bg-neutral-50"
+            isOpen && selecting === "checkIn"
+              ? "bg-neutral-50"
+              : "hover:bg-neutral-50"
           }`}
         >
-          <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider">Check-in</p>
-          <p className={`text-sm ${checkIn ? "text-neutral-900 font-medium" : "text-neutral-400"}`}>
-            {checkIn ? formatDate(checkIn) : "Aggiungi data"}
+          <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider">
+            Check-in
+          </p>
+          <p
+            className={`text-sm ${
+              checkIn ? "text-neutral-900 font-medium" : "text-neutral-400"
+            }`}
+          >
+            {checkIn ? formatDate(checkIn) : "Aggiungi"}
           </p>
         </button>
-
         <div className="w-px bg-neutral-200" />
-
-        {/* Check-out */}
         <button
-          onClick={() => { setIsOpen(true); setSelecting("checkOut"); }}
+          onClick={() => {
+            setIsOpen(true);
+            setSelecting("checkOut");
+          }}
           className={`flex-1 px-4 py-3 text-left cursor-pointer transition-colors ${
-            isOpen && selecting === "checkOut" ? "bg-neutral-50" : "hover:bg-neutral-50"
+            isOpen && selecting === "checkOut"
+              ? "bg-neutral-50"
+              : "hover:bg-neutral-50"
           }`}
         >
-          <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider">Check-out</p>
-          <p className={`text-sm ${checkOut ? "text-neutral-900 font-medium" : "text-neutral-400"}`}>
-            {checkOut ? formatDate(checkOut) : "Aggiungi data"}
+          <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider">
+            Check-out
+          </p>
+          <p
+            className={`text-sm ${
+              checkOut ? "text-neutral-900 font-medium" : "text-neutral-400"
+            }`}
+          >
+            {checkOut ? formatDate(checkOut) : "Aggiungi"}
           </p>
         </button>
       </div>
 
       {/* Calendar dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 bg-white border border-neutral-200 rounded-2xl shadow-xl z-50 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <button onClick={prevMonth} className="p-1.5 rounded-full hover:bg-neutral-100 transition-colors cursor-pointer">
-              <svg className="w-5 h-5 text-neutral-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+        <div className="absolute top-full left-0 mt-2 bg-white border border-neutral-200 rounded-2xl shadow-xl z-50 w-[300px] lg:w-[600px] p-5">
+          {/* Header with arrows */}
+          <div className="flex items-center justify-between mb-2">
+            <button
+              onClick={prevMonth}
+              className="p-2 rounded-full hover:bg-neutral-100 transition-colors cursor-pointer"
+            >
+              <svg
+                className="w-4 h-4 text-neutral-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2.5}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.75 19.5 8.25 12l7.5-7.5"
+                />
               </svg>
             </button>
-            <p className="text-sm font-medium text-neutral-500">
-              {selecting === "checkIn" ? "Seleziona check-in" : "Seleziona check-out"}
+            <p className="text-xs font-medium text-neutral-400">
+              {selecting === "checkIn"
+                ? "Seleziona check-in"
+                : "Seleziona check-out"}
             </p>
-            <button onClick={nextMonth} className="p-1.5 rounded-full hover:bg-neutral-100 transition-colors cursor-pointer">
-              <svg className="w-5 h-5 text-neutral-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+            <button
+              onClick={nextMonth}
+              className="p-2 rounded-full hover:bg-neutral-100 transition-colors cursor-pointer"
+            >
+              <svg
+                className="w-4 h-4 text-neutral-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2.5}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m8.25 4.5 7.5 7.5-7.5 7.5"
+                />
               </svg>
             </button>
           </div>
 
-          <div className="flex gap-8">
-            <CalendarMonth
-              year={viewMonth.year}
-              month={viewMonth.month}
-              checkIn={checkIn}
-              checkOut={checkOut}
-              hoverDate={hoverDate}
-              onDateClick={handleDateClick}
-              onDateHover={setHoverDate}
-            />
-            <CalendarMonth
-              year={secondMonth.year}
-              month={secondMonth.month}
-              checkIn={checkIn}
-              checkOut={checkOut}
-              hoverDate={hoverDate}
-              onDateClick={handleDateClick}
-              onDateHover={setHoverDate}
-            />
+          {/* Calendars: 1 on mobile, 2 on desktop */}
+          <div className="flex gap-6">
+            <div className="flex-1">
+              <CalendarMonth
+                year={viewMonth.year}
+                month={viewMonth.month}
+                checkIn={checkIn}
+                checkOut={checkOut}
+                hoverDate={hoverDate}
+                onDateClick={handleDateClick}
+                onDateHover={setHoverDate}
+              />
+            </div>
+            <div className="hidden lg:block flex-1">
+              <CalendarMonth
+                year={secondMonth.year}
+                month={secondMonth.month}
+                checkIn={checkIn}
+                checkOut={checkOut}
+                hoverDate={hoverDate}
+                onDateClick={handleDateClick}
+                onDateHover={setHoverDate}
+              />
+            </div>
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between mt-4 pt-4 border-t border-neutral-100">
+          <div className="flex items-center justify-between mt-4 pt-3 border-t border-neutral-100">
             <button
               onClick={handleClear}
-              className="text-sm font-medium text-neutral-500 hover:text-neutral-900 underline cursor-pointer"
+              className="text-xs font-medium text-neutral-500 hover:text-neutral-900 underline cursor-pointer"
             >
               Cancella date
             </button>
-            {checkIn && checkOut && (
-              <p className="text-sm text-neutral-500">
-                {Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24))} notti
+            {nights !== null && (
+              <p className="text-xs text-neutral-500 font-medium">
+                {nights} {nights === 1 ? "notte" : "notti"}
               </p>
             )}
           </div>
