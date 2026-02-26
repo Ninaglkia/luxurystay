@@ -52,6 +52,7 @@ export function CitySearch({ onPlaceSelect }: CitySearchProps) {
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
@@ -107,8 +108,27 @@ export function CitySearch({ onPlaceSelect }: CitySearchProps) {
 
   function handleInputChange(value: string) {
     setQuery(value);
+    setActiveIndex(-1);
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(() => searchPlaces(value), 150);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (!isOpen || predictions.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((prev) => (prev < predictions.length - 1 ? prev + 1 : 0));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((prev) => (prev > 0 ? prev - 1 : predictions.length - 1));
+    } else if (e.key === "Enter" && activeIndex >= 0) {
+      e.preventDefault();
+      handleSelect(predictions[activeIndex]);
+    } else if (e.key === "Escape") {
+      setIsOpen(false);
+      setActiveIndex(-1);
+    }
   }
 
   function handleSelect(prediction: Prediction) {
@@ -162,9 +182,13 @@ export function CitySearch({ onPlaceSelect }: CitySearchProps) {
           type="text"
           value={query}
           onChange={(e) => handleInputChange(e.target.value)}
+          onKeyDown={handleKeyDown}
           onFocus={() => predictions.length > 0 && setIsOpen(true)}
           placeholder="Cerca città, vie, luoghi..."
           className="w-full pl-11 pr-10 py-3 bg-white border border-neutral-200 rounded-xl text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent shadow-sm transition-shadow"
+          role="combobox"
+          aria-expanded={isOpen}
+          aria-activedescendant={activeIndex >= 0 ? `place-${activeIndex}` : undefined}
         />
         {query && !loading && (
           <button
@@ -188,11 +212,17 @@ export function CitySearch({ onPlaceSelect }: CitySearchProps) {
           ref={dropdownRef}
           className="absolute top-full left-0 right-0 mt-2 bg-white border border-neutral-200 rounded-xl shadow-lg overflow-hidden z-50 max-h-80 overflow-y-auto"
         >
-          {predictions.map((prediction) => (
+          {predictions.map((prediction, index) => (
             <button
               key={prediction.place_id}
+              id={`place-${index}`}
               onClick={() => handleSelect(prediction)}
-              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-neutral-50 transition-colors cursor-pointer border-b border-neutral-100 last:border-b-0"
+              onMouseEnter={() => setActiveIndex(index)}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors cursor-pointer border-b border-neutral-100 last:border-b-0 ${
+                index === activeIndex ? "bg-neutral-100" : "hover:bg-neutral-50"
+              }`}
+              role="option"
+              aria-selected={index === activeIndex}
             >
               <PlaceIcon types={prediction.types || []} />
               <div className="min-w-0">
