@@ -162,7 +162,7 @@ export function CitySearch({ onPlaceSelect }: CitySearchProps) {
   }
 
   return (
-    <div className="relative w-full max-w-md">
+    <div className="relative w-full lg:max-w-md">
       <div className="relative">
         <svg
           className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400"
@@ -185,7 +185,7 @@ export function CitySearch({ onPlaceSelect }: CitySearchProps) {
           onKeyDown={handleKeyDown}
           onFocus={() => predictions.length > 0 && setIsOpen(true)}
           placeholder="Cerca città, vie, luoghi..."
-          className="w-full pl-11 pr-10 py-3 bg-white border border-neutral-200 rounded-xl text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent shadow-sm transition-shadow"
+          className="w-full pl-11 pr-12 py-3 bg-white border border-neutral-200 rounded-xl text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent shadow-sm transition-shadow"
           role="combobox"
           aria-expanded={isOpen}
           aria-activedescendant={activeIndex >= 0 ? `place-${activeIndex}` : undefined}
@@ -193,7 +193,7 @@ export function CitySearch({ onPlaceSelect }: CitySearchProps) {
         {query && !loading && (
           <button
             onClick={handleClear}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 cursor-pointer"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />

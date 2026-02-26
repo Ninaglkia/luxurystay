@@ -85,7 +85,7 @@ export function GuestsPicker({ guests, onGuestsChange }: GuestsPickerProps) {
           </svg>
         </div>
         <div className="text-left">
-          <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Ospiti</p>
+          <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Ospiti</p>
           <p className={`text-sm mt-0.5 ${summary ? "text-neutral-900 font-semibold" : "text-neutral-400"}`}>
             {summary || "Aggiungi ospiti"}
           </p>
@@ -96,7 +96,7 @@ export function GuestsPicker({ guests, onGuestsChange }: GuestsPickerProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-3 w-[340px] bg-white border border-neutral-200 rounded-2xl shadow-2xl z-50 px-6 py-1">
+        <div className="absolute top-full right-0 mt-3 w-[calc(100vw-2rem)] max-w-[340px] bg-white border border-neutral-200 rounded-2xl shadow-2xl z-50 px-5 py-1">
           <Counter label="Adulti" description="Dai 13 anni in su" value={guests.adults}
             onIncrement={() => update("adults", 1)} onDecrement={() => update("adults", -1)} max={16} />
           <div className="h-px bg-neutral-100" />
