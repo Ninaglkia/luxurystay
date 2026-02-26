@@ -9,10 +9,55 @@ interface CitySearchProps {
 interface Prediction {
   place_id: string;
   description: string;
+  types: string[];
   structured_formatting: {
     main_text: string;
     secondary_text: string;
   };
+}
+
+// Icon based on place type
+function PlaceIcon({ types }: { types: string[] }) {
+  // City / locality
+  if (types.includes("locality") || types.includes("administrative_area_level_3")) {
+    return (
+      <svg className="w-5 h-5 text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z" />
+      </svg>
+    );
+  }
+  // Street / route
+  if (types.includes("route") || types.includes("street_address")) {
+    return (
+      <svg className="w-5 h-5 text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
+      </svg>
+    );
+  }
+  // Region / area
+  if (types.includes("administrative_area_level_1") || types.includes("administrative_area_level_2") || types.includes("country")) {
+    return (
+      <svg className="w-5 h-5 text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12.75 3.03v.568c0 .334.148.65.405.864l1.068.89c.442.369.535 1.01.216 1.49l-.51.766a2.25 2.25 0 0 1-1.161.886l-.143.048a1.107 1.107 0 0 0-.57 1.664c.369.555.169 1.307-.427 1.605L9 13.125l.423 1.059a.956.956 0 0 1-1.652.928l-.679-.906a1.125 1.125 0 0 0-1.906.172L4.5 15.75l-.612.153M12.75 3.031a9 9 0 1 0-8.862 12.872M12.75 3.031a9 9 0 0 1 6.69 14.036m0 0-.177-.529A2.25 2.25 0 0 0 17.128 15H16.5l-.324-.324a1.453 1.453 0 0 0-2.328.377l-.036.073a1.586 1.586 0 0 1-.982.816l-.99.282c-.55.157-.894.702-.8 1.267l.073.438c.08.474.49.821.97.821.846 0 1.598.542 1.865 1.345l.215.643m5.276-3.67a9.012 9.012 0 0 1-5.276 3.67" />
+      </svg>
+    );
+  }
+  // POI / establishment
+  if (types.includes("establishment") || types.includes("point_of_interest")) {
+    return (
+      <svg className="w-5 h-5 text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+      </svg>
+    );
+  }
+  // Default: location pin
+  return (
+    <svg className="w-5 h-5 text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+    </svg>
+  );
 }
 
 export function CitySearch({ onPlaceSelect }: CitySearchProps) {
@@ -27,10 +72,8 @@ export function CitySearch({ onPlaceSelect }: CitySearchProps) {
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Initialize services once Google Maps is loaded
     if (typeof google !== "undefined" && google.maps) {
       autocompleteService.current = new google.maps.places.AutocompleteService();
-      // PlacesService needs a DOM element or map
       const div = document.createElement("div");
       placesService.current = new google.maps.places.PlacesService(div);
     }
@@ -51,7 +94,7 @@ export function CitySearch({ onPlaceSelect }: CitySearchProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const searchCities = useCallback((input: string) => {
+  const searchPlaces = useCallback((input: string) => {
     if (!input.trim() || !autocompleteService.current) {
       setPredictions([]);
       setIsOpen(false);
@@ -62,12 +105,12 @@ export function CitySearch({ onPlaceSelect }: CitySearchProps) {
     autocompleteService.current.getPlacePredictions(
       {
         input,
-        types: ["(cities)"],
+        // No types filter — shows cities, streets, POIs, everything like Google Maps
       },
       (results, status) => {
         setLoading(false);
         if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-          setPredictions(results);
+          setPredictions(results as unknown as Prediction[]);
           setIsOpen(true);
         } else {
           setPredictions([]);
@@ -79,7 +122,7 @@ export function CitySearch({ onPlaceSelect }: CitySearchProps) {
   function handleInputChange(value: string) {
     setQuery(value);
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(() => searchCities(value), 200);
+    debounceTimer.current = setTimeout(() => searchPlaces(value), 150);
   }
 
   function handleSelect(prediction: Prediction) {
@@ -92,10 +135,15 @@ export function CitySearch({ onPlaceSelect }: CitySearchProps) {
           status === google.maps.places.PlacesServiceStatus.OK &&
           place?.geometry?.location
         ) {
+          // Zoom level based on type
+          const isCity = prediction.types.includes("locality") || prediction.types.includes("administrative_area_level_3");
+          const isRegion = prediction.types.includes("administrative_area_level_1") || prediction.types.includes("administrative_area_level_2") || prediction.types.includes("country");
+
           onPlaceSelect({
             lat: place.geometry.location.lat(),
             lng: place.geometry.location.lng(),
             name: prediction.structured_formatting.main_text,
+            // Pass zoom info via name for now — the map controller handles zoom
           });
         }
       }
@@ -103,6 +151,13 @@ export function CitySearch({ onPlaceSelect }: CitySearchProps) {
 
     setQuery(prediction.structured_formatting.main_text);
     setIsOpen(false);
+  }
+
+  function handleClear() {
+    setQuery("");
+    setPredictions([]);
+    setIsOpen(false);
+    inputRef.current?.focus();
   }
 
   return (
@@ -127,9 +182,19 @@ export function CitySearch({ onPlaceSelect }: CitySearchProps) {
           value={query}
           onChange={(e) => handleInputChange(e.target.value)}
           onFocus={() => predictions.length > 0 && setIsOpen(true)}
-          placeholder="Cerca una città..."
-          className="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-xl text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent shadow-sm transition-shadow"
+          placeholder="Cerca città, vie, luoghi..."
+          className="w-full pl-11 pr-10 py-3 bg-white border border-neutral-200 rounded-xl text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent shadow-sm transition-shadow"
         />
+        {query && !loading && (
+          <button
+            onClick={handleClear}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 cursor-pointer"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
         {loading && (
           <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
             <div className="w-4 h-4 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin" />
@@ -140,32 +205,15 @@ export function CitySearch({ onPlaceSelect }: CitySearchProps) {
       {isOpen && predictions.length > 0 && (
         <div
           ref={dropdownRef}
-          className="absolute top-full left-0 right-0 mt-2 bg-white border border-neutral-200 rounded-xl shadow-lg overflow-hidden z-50"
+          className="absolute top-full left-0 right-0 mt-2 bg-white border border-neutral-200 rounded-xl shadow-lg overflow-hidden z-50 max-h-80 overflow-y-auto"
         >
           {predictions.map((prediction) => (
             <button
               key={prediction.place_id}
               onClick={() => handleSelect(prediction)}
-              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-neutral-50 transition-colors cursor-pointer"
+              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-neutral-50 transition-colors cursor-pointer border-b border-neutral-100 last:border-b-0"
             >
-              <svg
-                className="w-5 h-5 text-neutral-400 shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"
-                />
-              </svg>
+              <PlaceIcon types={prediction.types || []} />
               <div className="min-w-0">
                 <p className="text-sm font-medium text-neutral-900 truncate">
                   {prediction.structured_formatting.main_text}
@@ -176,6 +224,9 @@ export function CitySearch({ onPlaceSelect }: CitySearchProps) {
               </div>
             </button>
           ))}
+          <div className="px-4 py-2 bg-neutral-50 flex items-center justify-end">
+            <img src="https://developers.google.com/static/maps/documentation/images/powered_by_google_on_white.png" alt="Powered by Google" className="h-4" />
+          </div>
         </div>
       )}
     </div>
