@@ -17,7 +17,9 @@ export default async function SettingsPage() {
       user={{
         id: user.id,
         email: user.email ?? "",
-        fullName: user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "Utente",
+        fullName: user.user_metadata?.full_name ?? "",
+        phone: user.user_metadata?.phone ?? "",
+        bio: user.user_metadata?.bio ?? "",
         avatarUrl: user.user_metadata?.avatar_url ?? null,
         createdAt: user.created_at,
         provider: user.app_metadata?.provider ?? "email",
