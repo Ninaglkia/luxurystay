@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useMapsLibrary } from "@vis.gl/react-google-maps";
 
 interface CitySearchProps {
   onPlaceSelect: (location: { lat: number; lng: number; name: string }) => void;
@@ -16,9 +17,7 @@ interface Prediction {
   };
 }
 
-// Icon based on place type
 function PlaceIcon({ types }: { types: string[] }) {
-  // City / locality
   if (types.includes("locality") || types.includes("administrative_area_level_3")) {
     return (
       <svg className="w-5 h-5 text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -26,7 +25,6 @@ function PlaceIcon({ types }: { types: string[] }) {
       </svg>
     );
   }
-  // Street / route
   if (types.includes("route") || types.includes("street_address")) {
     return (
       <svg className="w-5 h-5 text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -34,7 +32,6 @@ function PlaceIcon({ types }: { types: string[] }) {
       </svg>
     );
   }
-  // Region / area
   if (types.includes("administrative_area_level_1") || types.includes("administrative_area_level_2") || types.includes("country")) {
     return (
       <svg className="w-5 h-5 text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -42,16 +39,6 @@ function PlaceIcon({ types }: { types: string[] }) {
       </svg>
     );
   }
-  // POI / establishment
-  if (types.includes("establishment") || types.includes("point_of_interest")) {
-    return (
-      <svg className="w-5 h-5 text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-      </svg>
-    );
-  }
-  // Default: location pin
   return (
     <svg className="w-5 h-5 text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -71,13 +58,15 @@ export function CitySearch({ onPlaceSelect }: CitySearchProps) {
   const placesService = useRef<google.maps.places.PlacesService | null>(null);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
+  // Wait for the places library to be loaded by APIProvider
+  const placesLib = useMapsLibrary("places");
+
   useEffect(() => {
-    if (typeof google !== "undefined" && google.maps) {
-      autocompleteService.current = new google.maps.places.AutocompleteService();
-      const div = document.createElement("div");
-      placesService.current = new google.maps.places.PlacesService(div);
-    }
-  }, []);
+    if (!placesLib) return;
+    autocompleteService.current = new placesLib.AutocompleteService();
+    const div = document.createElement("div");
+    placesService.current = new placesLib.PlacesService(div);
+  }, [placesLib]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -103,10 +92,7 @@ export function CitySearch({ onPlaceSelect }: CitySearchProps) {
 
     setLoading(true);
     autocompleteService.current.getPlacePredictions(
-      {
-        input,
-        // No types filter — shows cities, streets, POIs, everything like Google Maps
-      },
+      { input },
       (results, status) => {
         setLoading(false);
         if (status === google.maps.places.PlacesServiceStatus.OK && results) {
@@ -135,15 +121,10 @@ export function CitySearch({ onPlaceSelect }: CitySearchProps) {
           status === google.maps.places.PlacesServiceStatus.OK &&
           place?.geometry?.location
         ) {
-          // Zoom level based on type
-          const isCity = prediction.types.includes("locality") || prediction.types.includes("administrative_area_level_3");
-          const isRegion = prediction.types.includes("administrative_area_level_1") || prediction.types.includes("administrative_area_level_2") || prediction.types.includes("country");
-
           onPlaceSelect({
             lat: place.geometry.location.lat(),
             lng: place.geometry.location.lng(),
             name: prediction.structured_formatting.main_text,
-            // Pass zoom info via name for now — the map controller handles zoom
           });
         }
       }
@@ -224,9 +205,6 @@ export function CitySearch({ onPlaceSelect }: CitySearchProps) {
               </div>
             </button>
           ))}
-          <div className="px-4 py-2 bg-neutral-50 flex items-center justify-end">
-            <img src="https://developers.google.com/static/maps/documentation/images/powered_by_google_on_white.png" alt="Powered by Google" className="h-4" />
-          </div>
         </div>
       )}
     </div>
