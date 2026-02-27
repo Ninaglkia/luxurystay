@@ -200,16 +200,25 @@ function StepSpaceType({ selected, onSelect }: { selected: string | null; onSele
 }
 
 /* ═══════════════════════════════════════════════
-   Step 4 — Location
+   Step 4 — Location (Airbnb-style draggable pin + address form)
    ═══════════════════════════════════════════════ */
-function LocationSearch({ address, onAddressChange, onLocationSelect }: {
-  address: string; onAddressChange: (v: string) => void;
-  onLocationSelect: (loc: { lat: number; lng: number; address: string }) => void;
+interface AddressDetails {
+  street: string;
+  streetNumber: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  country: string;
+}
+
+function LocationSearch({ onPlaceSelect }: {
+  onPlaceSelect: (loc: { lat: number; lng: number }, address: AddressDetails) => void;
 }) {
   const placesLib = useMapsLibrary("places");
   const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
   const placesService = useRef<google.maps.places.PlacesService | null>(null);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const [query, setQuery] = useState("");
   const [predictions, setPredictions] = useState<google.maps.places.AutocompletePrediction[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -221,7 +230,7 @@ function LocationSearch({ address, onAddressChange, onLocationSelect }: {
   }, [placesLib]);
 
   function handleInput(value: string) {
-    onAddressChange(value);
+    setQuery(value);
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     if (!value.trim()) { setPredictions([]); setIsOpen(false); return; }
     debounceTimer.current = setTimeout(() => {
@@ -236,14 +245,18 @@ function LocationSearch({ address, onAddressChange, onLocationSelect }: {
 
   function handleSelect(prediction: google.maps.places.AutocompletePrediction) {
     placesService.current?.getDetails(
-      { placeId: prediction.place_id, fields: ["geometry", "formatted_address"] },
+      { placeId: prediction.place_id, fields: ["geometry", "formatted_address", "address_components"] },
       (place, status) => {
         if (status === google.maps.places.PlacesServiceStatus.OK && place?.geometry?.location) {
-          onLocationSelect({ lat: place.geometry.location.lat(), lng: place.geometry.location.lng(), address: place.formatted_address || prediction.description });
+          const addr = parseAddressComponents(place.address_components || []);
+          onPlaceSelect(
+            { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() },
+            addr
+          );
         }
       }
     );
-    onAddressChange(prediction.description);
+    setQuery(prediction.description);
     setIsOpen(false);
   }
 
@@ -254,7 +267,7 @@ function LocationSearch({ address, onAddressChange, onLocationSelect }: {
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
           <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
         </svg>
-        <input type="text" value={address} onChange={(e) => handleInput(e.target.value)} placeholder="Inserisci il tuo indirizzo"
+        <input type="text" value={query} onChange={(e) => handleInput(e.target.value)} placeholder="Cerca indirizzo o città..."
           className="w-full pl-12 pr-4 py-4 bg-white border border-neutral-300 rounded-xl text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900 shadow-sm" />
       </div>
       {isOpen && predictions.length > 0 && (
@@ -275,36 +288,229 @@ function LocationSearch({ address, onAddressChange, onLocationSelect }: {
   );
 }
 
-function MapPanner({ target }: { target: { lat: number; lng: number } | null }) {
+function parseAddressComponents(components: google.maps.GeocoderAddressComponent[]): AddressDetails {
+  const get = (type: string) => components.find(c => c.types.includes(type))?.long_name || "";
+  return {
+    street: get("route"),
+    streetNumber: get("street_number"),
+    city: get("locality") || get("administrative_area_level_3"),
+    province: get("administrative_area_level_2"),
+    postalCode: get("postal_code"),
+    country: get("country") || "Italia",
+  };
+}
+
+function DraggableMarker({ location, onDragEnd }: {
+  location: { lat: number; lng: number };
+  onDragEnd: (pos: { lat: number; lng: number }) => void;
+}) {
   const map = useMap();
-  useEffect(() => { if (map && target) { map.panTo(target); map.setZoom(15); } }, [map, target]);
+  const markerRef = useRef<google.maps.Marker | null>(null);
+
+  useEffect(() => {
+    if (!map) return;
+
+    if (!markerRef.current) {
+      markerRef.current = new google.maps.Marker({
+        map,
+        position: location,
+        draggable: true,
+        animation: google.maps.Animation.DROP,
+        icon: {
+          path: "M12 0C7.03 0 3 4.03 3 9c0 6.75 9 15 9 15s9-8.25 9-15c0-4.97-4.03-9-9-9zm0 12.75c-2.07 0-3.75-1.68-3.75-3.75S9.93 5.25 12 5.25s3.75 1.68 3.75 3.75-1.68 3.75-3.75 3.75z",
+          fillColor: "#171717",
+          fillOpacity: 1,
+          strokeColor: "#ffffff",
+          strokeWeight: 2,
+          scale: 1.8,
+          anchor: new google.maps.Point(12, 24),
+        },
+      });
+
+      markerRef.current.addListener("dragend", () => {
+        const pos = markerRef.current?.getPosition();
+        if (pos) onDragEnd({ lat: pos.lat(), lng: pos.lng() });
+      });
+    } else {
+      markerRef.current.setPosition(location);
+    }
+  }, [map, location, onDragEnd]);
+
+  // Pan map when location changes
+  useEffect(() => {
+    if (map) {
+      map.panTo(location);
+      map.setZoom(16);
+    }
+  }, [map, location]);
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      markerRef.current?.setMap(null);
+    };
+  }, []);
+
   return null;
 }
 
-function StepLocation({ address, onAddressChange, location, onLocationSelect }: {
-  address: string; onAddressChange: (v: string) => void;
+function StepLocation({ location, addressDetails, onLocationChange, onAddressDetailsChange }: {
   location: { lat: number; lng: number } | null;
-  onLocationSelect: (loc: { lat: number; lng: number; address: string }) => void;
+  addressDetails: AddressDetails;
+  onLocationChange: (loc: { lat: number; lng: number }) => void;
+  onAddressDetailsChange: (addr: AddressDetails) => void;
 }) {
+  const geocoderRef = useRef<google.maps.Geocoder | null>(null);
+  const [geocoding, setGeocoding] = useState(false);
+
+  // Reverse geocode when pin is dragged
+  function handlePinDrag(pos: { lat: number; lng: number }) {
+    onLocationChange(pos);
+    if (!geocoderRef.current) geocoderRef.current = new google.maps.Geocoder();
+    setGeocoding(true);
+    geocoderRef.current.geocode({ location: pos }, (results, status) => {
+      setGeocoding(false);
+      if (status === "OK" && results?.[0]) {
+        const addr = parseAddressComponents(results[0].address_components);
+        onAddressDetailsChange(addr);
+      }
+    });
+  }
+
+  // When user searches and selects a place
+  function handlePlaceSelect(pos: { lat: number; lng: number }, addr: AddressDetails) {
+    onLocationChange(pos);
+    onAddressDetailsChange(addr);
+  }
+
+  // Detect user's location on first mount
+  useEffect(() => {
+    if (location) return;
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        const pos = { lat: p.coords.latitude, lng: p.coords.longitude };
+        handlePinDrag(pos);
+      },
+      () => {},
+      { enableHighAccuracy: false, maximumAge: 60000, timeout: 5000 }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const mapCenter = location || { lat: 41.9028, lng: 12.4964 };
+  const hasPin = location !== null;
+
+  const inputClass = "w-full border border-neutral-200 rounded-lg px-3 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-shadow";
+
   return (
     <div className="max-w-2xl mx-auto w-full">
-      <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-2xl lg:text-3xl font-bold text-neutral-900 mb-2">Dove si trova il tuo alloggio?</motion.h2>
-      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="text-neutral-500 mb-6">Il tuo indirizzo viene condiviso con gli ospiti solo dopo che hanno effettuato una prenotazione.</motion.p>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-2xl overflow-hidden border border-neutral-200 shadow-sm">
+      <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+        className="text-2xl lg:text-3xl font-bold text-neutral-900 mb-2">Dove si trova il tuo alloggio?</motion.h2>
+      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
+        className="text-neutral-500 mb-6">Trascina il segnaposto sulla mappa per posizionarlo esattamente, poi verifica l&apos;indirizzo.</motion.p>
+
+      {/* Map with draggable pin */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+        className="rounded-2xl overflow-hidden border border-neutral-200 shadow-sm mb-6">
         {GOOGLE_MAPS_API_KEY ? (
           <div className="relative">
-            <div className="h-[300px] lg:h-[380px]">
-              <Map defaultCenter={location || { lat: 41.9028, lng: 12.4964 }} defaultZoom={location ? 15 : 6} gestureHandling="greedy" disableDefaultUI zoomControl mapId="luxurystay-host-map" style={{ width: "100%", height: "100%" }} />
-              <MapPanner target={location} />
+            <div className="h-[280px] lg:h-[340px]">
+              <Map defaultCenter={mapCenter} defaultZoom={hasPin ? 16 : 6}
+                gestureHandling="greedy" disableDefaultUI zoomControl mapId="luxurystay-host-map"
+                style={{ width: "100%", height: "100%" }}
+                onClick={(e) => {
+                  if (e.detail.latLng) {
+                    const pos = { lat: e.detail.latLng.lat, lng: e.detail.latLng.lng };
+                    handlePinDrag(pos);
+                  }
+                }}
+              />
+              {hasPin && <DraggableMarker location={location} onDragEnd={handlePinDrag} />}
             </div>
+            {/* Search overlay */}
             <div className="absolute top-4 left-4 right-4">
-              <LocationSearch address={address} onAddressChange={onAddressChange} onLocationSelect={onLocationSelect} />
+              <LocationSearch onPlaceSelect={handlePlaceSelect} />
             </div>
+            {/* Drag hint */}
+            {!hasPin && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="bg-white/90 backdrop-blur-sm rounded-xl px-5 py-3 shadow-lg">
+                  <p className="text-sm font-medium text-neutral-700">Clicca o cerca per posizionare il segnaposto</p>
+                </div>
+              </div>
+            )}
+            {/* Geocoding indicator */}
+            {geocoding && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white rounded-full px-4 py-2 shadow-lg flex items-center gap-2">
+                <div className="w-3 h-3 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin" />
+                <span className="text-xs text-neutral-600">Ricerca indirizzo...</span>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="h-[300px] bg-neutral-100 flex items-center justify-center"><p className="text-neutral-400 text-sm">Mappa non disponibile</p></div>
+          <div className="h-[280px] bg-neutral-100 flex items-center justify-center"><p className="text-neutral-400 text-sm">Mappa non disponibile</p></div>
         )}
       </motion.div>
+
+      {/* Address form — pre-filled from geocoding, editable by user */}
+      {hasPin && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-2xl border border-neutral-200 p-5 space-y-4">
+          <div className="flex items-center gap-2 mb-1">
+            <svg className="w-5 h-5 text-neutral-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+            </svg>
+            <h3 className="text-sm font-semibold text-neutral-900">Conferma il tuo indirizzo</h3>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-2">
+              <label className="block text-xs font-medium text-neutral-500 mb-1">Via</label>
+              <input type="text" value={addressDetails.street} placeholder="Via Roma"
+                onChange={(e) => onAddressDetailsChange({ ...addressDetails, street: e.target.value })}
+                className={inputClass} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-neutral-500 mb-1">N. civico</label>
+              <input type="text" value={addressDetails.streetNumber} placeholder="12"
+                onChange={(e) => onAddressDetailsChange({ ...addressDetails, streetNumber: e.target.value })}
+                className={inputClass} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-neutral-500 mb-1">Città</label>
+              <input type="text" value={addressDetails.city} placeholder="Roma"
+                onChange={(e) => onAddressDetailsChange({ ...addressDetails, city: e.target.value })}
+                className={inputClass} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-neutral-500 mb-1">Provincia</label>
+              <input type="text" value={addressDetails.province} placeholder="RM"
+                onChange={(e) => onAddressDetailsChange({ ...addressDetails, province: e.target.value })}
+                className={inputClass} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-neutral-500 mb-1">CAP</label>
+              <input type="text" value={addressDetails.postalCode} placeholder="00100"
+                onChange={(e) => onAddressDetailsChange({ ...addressDetails, postalCode: e.target.value })}
+                className={inputClass} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-neutral-500 mb-1">Paese</label>
+              <input type="text" value={addressDetails.country} placeholder="Italia"
+                onChange={(e) => onAddressDetailsChange({ ...addressDetails, country: e.target.value })}
+                className={inputClass} />
+            </div>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
@@ -542,8 +748,10 @@ export function AddPropertyFlow() {
   // All form data
   const [category, setCategory] = useState<string | null>(null);
   const [spaceType, setSpaceType] = useState<string | null>(null);
-  const [address, setAddress] = useState("");
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [addressDetails, setAddressDetails] = useState<AddressDetails>({
+    street: "", streetNumber: "", city: "", province: "", postalCode: "", country: "Italia",
+  });
   const [params, setParams] = useState({ guests: 1, bedrooms: 1, beds: 1, bathrooms: 1 });
   const [amenities, setAmenities] = useState<string[]>([]);
   const [photos, setPhotos] = useState<File[]>([]);
@@ -561,7 +769,7 @@ export function AddPropertyFlow() {
       case 1: return true;  // phase 1 intro
       case 2: return category !== null;
       case 3: return spaceType !== null;
-      case 4: return address.trim().length > 0;
+      case 4: return location !== null && addressDetails.city.trim().length > 0;
       case 5: return params.guests >= 1;
       case 6: return true;  // phase 2 intro
       case 7: return true;  // amenities (optional)
@@ -581,9 +789,14 @@ export function AddPropertyFlow() {
   function handleBack() {
     if (step > 0) { setDirection(-1); setStep(step - 1); }
   }
-  function handleLocationSelect(loc: { lat: number; lng: number; address: string }) {
-    setLocation({ lat: loc.lat, lng: loc.lng }); setAddress(loc.address);
-  }
+  // Build full address string from details
+  const fullAddress = [
+    [addressDetails.street, addressDetails.streetNumber].filter(Boolean).join(" "),
+    addressDetails.city,
+    addressDetails.province,
+    addressDetails.postalCode,
+    addressDetails.country,
+  ].filter(Boolean).join(", ");
 
   async function handlePublish() {
     if (publishing) return;
@@ -614,7 +827,7 @@ export function AddPropertyFlow() {
         user_id: user.id,
         category,
         space_type: spaceType,
-        address,
+        address: fullAddress,
         lat: location!.lat,
         lng: location!.lng,
         guests: params.guests,
@@ -677,7 +890,7 @@ export function AddPropertyFlow() {
 
             {step === 2 && <StepCategory selected={category} onSelect={setCategory} />}
             {step === 3 && <StepSpaceType selected={spaceType} onSelect={setSpaceType} />}
-            {step === 4 && <StepLocation address={address} onAddressChange={setAddress} location={location} onLocationSelect={handleLocationSelect} />}
+            {step === 4 && <StepLocation location={location} addressDetails={addressDetails} onLocationChange={setLocation} onAddressDetailsChange={setAddressDetails} />}
             {step === 5 && <StepFloorPlan params={params} onChange={setParams} />}
 
             {step === 6 && (
@@ -708,7 +921,7 @@ export function AddPropertyFlow() {
             )}
 
             {step === 12 && <StepPrice value={price} onChange={setPrice} />}
-            {step === 13 && <StepReview data={{ category, spaceType, address, params, amenities, photos, title, description, price }} />}
+            {step === 13 && <StepReview data={{ category, spaceType, address: fullAddress, params, amenities, photos, title, description, price }} />}
           </motion.div>
         </AnimatePresence>
       </main>
