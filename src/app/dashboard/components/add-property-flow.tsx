@@ -750,12 +750,30 @@ function StepAmenities({ selected, onToggle }: { selected: string[]; onToggle: (
 /* ═══════════════════════════════════════════════
    Step 8 — Photos
    ═══════════════════════════════════════════════ */
-function StepPhotos({ photos, onAddPhotos }: { photos: File[]; onAddPhotos: (files: File[]) => void }) {
+function StepPhotos({ photos, onAddPhotos, onRemovePhoto }: {
+  photos: File[];
+  onAddPhotos: (files: File[]) => void;
+  onRemovePhoto: (index: number) => void;
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const previews = photos.map((f) => URL.createObjectURL(f));
+  const [error, setError] = useState("");
+  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
   function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    if (e.target.files) onAddPhotos(Array.from(e.target.files));
+    if (!e.target.files) return;
+    const all = Array.from(e.target.files);
+    const valid = all.filter(f => ALLOWED_TYPES.includes(f.type));
+    const rejected = all.filter(f => !ALLOWED_TYPES.includes(f.type));
+
+    if (rejected.length > 0) {
+      const names = rejected.map(f => f.name).join(", ");
+      setError(`Formato non supportato: ${names}. Usa solo JPG, PNG o WebP.`);
+    } else {
+      setError("");
+    }
+    if (valid.length > 0) onAddPhotos(valid);
+    // Reset input so re-selecting the same file works
+    e.target.value = "";
   }
 
   return (
@@ -764,6 +782,22 @@ function StepPhotos({ photos, onAddPhotos }: { photos: File[]; onAddPhotos: (fil
         className="text-2xl lg:text-3xl font-bold text-neutral-900 text-center mb-2">Aggiungi alcune foto del tuo alloggio</motion.h2>
       <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
         className="text-neutral-500 text-center mb-8">Per iniziare ti serviranno almeno 5 foto. Potrai aggiungerne altre in seguito.</motion.p>
+
+      {/* Error banner */}
+      {error && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+          className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-start gap-3">
+          <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+          </svg>
+          <p className="text-sm text-red-700 flex-1">{error}</p>
+          <button onClick={() => setError("")} className="text-red-400 hover:text-red-600 shrink-0 cursor-pointer">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </motion.div>
+      )}
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
         {photos.length === 0 ? (
@@ -774,15 +808,21 @@ function StepPhotos({ photos, onAddPhotos }: { photos: File[]; onAddPhotos: (fil
             </svg>
             <div className="text-center">
               <p className="text-base font-semibold text-neutral-900">Carica le tue foto</p>
-              <p className="text-sm text-neutral-500 mt-1">Trascina qui oppure clicca per selezionare</p>
+              <p className="text-sm text-neutral-500 mt-1">Solo JPG, PNG e WebP</p>
             </div>
           </button>
         ) : (
           <div>
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-              {previews.map((url, i) => (
-                <div key={i} className="aspect-[4/3] rounded-xl overflow-hidden bg-neutral-100">
-                  <img src={url} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
+              {photos.map((file, i) => (
+                <div key={i} className="relative group aspect-[4/3] rounded-xl overflow-hidden bg-neutral-100">
+                  <img src={URL.createObjectURL(file)} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
+                  <button onClick={() => onRemovePhoto(i)}
+                    className="absolute top-2 right-2 w-7 h-7 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity cursor-pointer">
+                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
               ))}
               <button onClick={() => inputRef.current?.click()}
@@ -797,7 +837,7 @@ function StepPhotos({ photos, onAddPhotos }: { photos: File[]; onAddPhotos: (fil
           </div>
         )}
       </motion.div>
-      <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} />
+      <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleFiles} />
     </div>
   );
 }
@@ -1081,7 +1121,7 @@ export function AddPropertyFlow() {
             )}
 
             {step === 9 && <StepAmenities selected={amenities} onToggle={toggleAmenity} />}
-            {step === 10 && <StepPhotos photos={photos} onAddPhotos={(files) => setPhotos((prev) => [...prev, ...files])} />}
+            {step === 10 && <StepPhotos photos={photos} onAddPhotos={(files) => setPhotos((prev) => [...prev, ...files])} onRemovePhoto={(i) => setPhotos((prev) => prev.filter((_, idx) => idx !== i))} />}
             {step === 11 && <StepTitle value={title} onChange={setTitle} />}
             {step === 12 && <StepDescription value={description} onChange={setDescription} />}
 
