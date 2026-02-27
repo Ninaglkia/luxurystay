@@ -1171,7 +1171,7 @@ export function AddPropertyFlow() {
   );
 
   if (GOOGLE_MAPS_API_KEY) {
-    return <APIProvider apiKey={GOOGLE_MAPS_API_KEY} libraries={["places"]}>{content}</APIProvider>;
+    return <APIProvider apiKey={GOOGLE_MAPS_API_KEY} libraries={["places", "geocoding"]}>{content}</APIProvider>;
   }
   return content;
 }
