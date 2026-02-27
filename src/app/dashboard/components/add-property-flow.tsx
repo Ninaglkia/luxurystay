@@ -371,8 +371,17 @@ function StepLocation({ location, addressDetails, onLocationChange, onAddressDet
     setGeocoding(true);
     geocoderRef.current.geocode({ location: pos }, (results, status) => {
       setGeocoding(false);
-      if (status === "OK" && results?.[0]) {
-        const addr = parseAddressComponents(results[0].address_components);
+      if (status === "OK" && results && results.length > 0) {
+        // Find the most detailed result that includes a street address
+        const streetResult = results.find(r =>
+          r.types.includes("street_address") || r.types.includes("premise")
+        );
+        // Fallback: find any result with a route component
+        const routeResult = results.find(r =>
+          r.address_components.some(c => c.types.includes("route"))
+        );
+        const best = streetResult || routeResult || results[0];
+        const addr = parseAddressComponents(best.address_components);
         onAddressDetailsChange(addr);
       }
     });
