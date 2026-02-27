@@ -9,7 +9,7 @@ import { TiltCard } from "./tilt-card";
 import { createClient } from "@/lib/supabase/client";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
-const TOTAL_STEPS = 14;
+const TOTAL_STEPS = 15;
 const pageTransition = { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const };
 
 /* ═══════════════════════════════════════════════
@@ -355,7 +355,8 @@ function DraggableMarker({ location, onDragEnd }: {
   return null;
 }
 
-function StepLocation({ location, addressDetails, onLocationChange, onAddressDetailsChange }: {
+/* Step 4a — Map with draggable pin */
+function StepLocationMap({ location, addressDetails, onLocationChange, onAddressDetailsChange }: {
   location: { lat: number; lng: number } | null;
   addressDetails: AddressDetails;
   onLocationChange: (loc: { lat: number; lng: number }) => void;
@@ -364,19 +365,15 @@ function StepLocation({ location, addressDetails, onLocationChange, onAddressDet
   const geocoderRef = useRef<google.maps.Geocoder | null>(null);
   const [geocoding, setGeocoding] = useState(false);
 
-  // Reverse geocode when pin is dragged
-  function handlePinDrag(pos: { lat: number; lng: number }) {
-    onLocationChange(pos);
+  function reverseGeocode(pos: { lat: number; lng: number }) {
     if (!geocoderRef.current) geocoderRef.current = new google.maps.Geocoder();
     setGeocoding(true);
     geocoderRef.current.geocode({ location: pos }, (results, status) => {
       setGeocoding(false);
       if (status === "OK" && results && results.length > 0) {
-        // Find the most detailed result that includes a street address
         const streetResult = results.find(r =>
           r.types.includes("street_address") || r.types.includes("premise")
         );
-        // Fallback: find any result with a route component
         const routeResult = results.find(r =>
           r.address_components.some(c => c.types.includes("route"))
         );
@@ -387,13 +384,16 @@ function StepLocation({ location, addressDetails, onLocationChange, onAddressDet
     });
   }
 
-  // When user searches and selects a place
+  function handlePinDrag(pos: { lat: number; lng: number }) {
+    onLocationChange(pos);
+    reverseGeocode(pos);
+  }
+
   function handlePlaceSelect(pos: { lat: number; lng: number }, addr: AddressDetails) {
     onLocationChange(pos);
     onAddressDetailsChange(addr);
   }
 
-  // Detect user's location on first mount
   useEffect(() => {
     if (location) return;
     if (!navigator.geolocation) return;
@@ -411,38 +411,56 @@ function StepLocation({ location, addressDetails, onLocationChange, onAddressDet
   const mapCenter = location || { lat: 41.9028, lng: 12.4964 };
   const hasPin = location !== null;
 
-  const inputClass = "w-full border border-neutral-200 rounded-lg px-3 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-shadow";
+  // Build display address from details
+  const displayAddress = [
+    [addressDetails.street, addressDetails.streetNumber].filter(Boolean).join(" "),
+    addressDetails.city,
+    addressDetails.province,
+    addressDetails.country,
+    addressDetails.postalCode,
+  ].filter(Boolean).join(", ");
 
   return (
     <div className="max-w-2xl mx-auto w-full">
       <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-        className="text-2xl lg:text-3xl font-bold text-neutral-900 mb-2">Dove si trova il tuo alloggio?</motion.h2>
+        className="text-2xl lg:text-3xl font-bold text-neutral-900 mb-2">Il punto indicato è corretto?</motion.h2>
       <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
-        className="text-neutral-500 mb-6">Trascina il segnaposto sulla mappa per posizionarlo esattamente, poi verifica l&apos;indirizzo.</motion.p>
+        className="text-neutral-500 mb-6">Il tuo indirizzo viene condiviso con gli ospiti solo dopo che hanno effettuato una prenotazione.</motion.p>
 
-      {/* Map with draggable pin */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-        className="rounded-2xl overflow-hidden border border-neutral-200 shadow-sm mb-6">
+        className="rounded-2xl overflow-hidden border border-neutral-200 shadow-sm">
         {GOOGLE_MAPS_API_KEY ? (
           <div className="relative">
-            <div className="h-[280px] lg:h-[340px]">
+            {/* Address bar on top of map */}
+            {hasPin && displayAddress && (
+              <div className="absolute top-4 left-4 right-4 z-10">
+                <div className="bg-white rounded-xl shadow-lg px-4 py-3 flex items-center gap-3">
+                  <svg className="w-5 h-5 text-neutral-700 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                  </svg>
+                  <p className="text-sm font-medium text-neutral-900 truncate">{displayAddress}</p>
+                </div>
+              </div>
+            )}
+            <div className="h-[350px] lg:h-[420px]">
               <Map defaultCenter={mapCenter} defaultZoom={hasPin ? 16 : 6}
                 gestureHandling="greedy" disableDefaultUI zoomControl mapId="luxurystay-host-map"
                 style={{ width: "100%", height: "100%" }}
                 onClick={(e) => {
                   if (e.detail.latLng) {
-                    const pos = { lat: e.detail.latLng.lat, lng: e.detail.latLng.lng };
-                    handlePinDrag(pos);
+                    handlePinDrag({ lat: e.detail.latLng.lat, lng: e.detail.latLng.lng });
                   }
                 }}
               />
               {hasPin && <DraggableMarker location={location} onDragEnd={handlePinDrag} />}
             </div>
-            {/* Search overlay */}
-            <div className="absolute top-4 left-4 right-4">
-              <LocationSearch onPlaceSelect={handlePlaceSelect} />
-            </div>
-            {/* Drag hint */}
+            {/* Search — only when no pin yet */}
+            {!hasPin && (
+              <div className="absolute top-4 left-4 right-4 z-10">
+                <LocationSearch onPlaceSelect={handlePlaceSelect} />
+              </div>
+            )}
             {!hasPin && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="bg-white/90 backdrop-blur-sm rounded-xl px-5 py-3 shadow-lg">
@@ -450,7 +468,6 @@ function StepLocation({ location, addressDetails, onLocationChange, onAddressDet
                 </div>
               </div>
             )}
-            {/* Geocoding indicator */}
             {geocoding && (
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white rounded-full px-4 py-2 shadow-lg flex items-center gap-2">
                 <div className="w-3 h-3 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin" />
@@ -459,68 +476,87 @@ function StepLocation({ location, addressDetails, onLocationChange, onAddressDet
             )}
           </div>
         ) : (
-          <div className="h-[280px] bg-neutral-100 flex items-center justify-center"><p className="text-neutral-400 text-sm">Mappa non disponibile</p></div>
+          <div className="h-[350px] bg-neutral-100 flex items-center justify-center"><p className="text-neutral-400 text-sm">Mappa non disponibile</p></div>
         )}
       </motion.div>
+    </div>
+  );
+}
 
-      {/* Address form — pre-filled from geocoding, editable by user */}
-      {hasPin && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl border border-neutral-200 p-5 space-y-4">
-          <div className="flex items-center gap-2 mb-1">
-            <svg className="w-5 h-5 text-neutral-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-            </svg>
-            <h3 className="text-sm font-semibold text-neutral-900">Conferma il tuo indirizzo</h3>
-          </div>
+/* Step 4b — Confirm address form */
+function StepLocationConfirm({ addressDetails, onAddressDetailsChange }: {
+  addressDetails: AddressDetails;
+  onAddressDetailsChange: (addr: AddressDetails) => void;
+}) {
+  const inputClass = "w-full border-b border-neutral-200 px-0 py-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-900 transition-colors bg-transparent";
 
-          <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-2">
-              <label className="block text-xs font-medium text-neutral-500 mb-1">Via</label>
-              <input type="text" value={addressDetails.street} placeholder="Via Roma"
-                onChange={(e) => onAddressDetailsChange({ ...addressDetails, street: e.target.value })}
-                className={inputClass} />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-neutral-500 mb-1">N. civico</label>
-              <input type="text" value={addressDetails.streetNumber} placeholder="12"
-                onChange={(e) => onAddressDetailsChange({ ...addressDetails, streetNumber: e.target.value })}
-                className={inputClass} />
-            </div>
-          </div>
+  return (
+    <div className="max-w-lg mx-auto w-full">
+      <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+        className="text-2xl lg:text-3xl font-bold text-neutral-900 mb-2">Conferma il tuo indirizzo</motion.h2>
+      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
+        className="text-neutral-500 mb-8">Il tuo indirizzo viene condiviso con gli ospiti solo dopo che hanno effettuato una prenotazione.</motion.p>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-neutral-500 mb-1">Città</label>
-              <input type="text" value={addressDetails.city} placeholder="Roma"
-                onChange={(e) => onAddressDetailsChange({ ...addressDetails, city: e.target.value })}
-                className={inputClass} />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-neutral-500 mb-1">Provincia</label>
-              <input type="text" value={addressDetails.province} placeholder="RM"
-                onChange={(e) => onAddressDetailsChange({ ...addressDetails, province: e.target.value })}
-                className={inputClass} />
-            </div>
-          </div>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+        className="bg-white rounded-2xl border border-neutral-200 px-5">
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-neutral-500 mb-1">CAP</label>
-              <input type="text" value={addressDetails.postalCode} placeholder="00100"
-                onChange={(e) => onAddressDetailsChange({ ...addressDetails, postalCode: e.target.value })}
-                className={inputClass} />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-neutral-500 mb-1">Paese</label>
-              <input type="text" value={addressDetails.country} placeholder="Italia"
-                onChange={(e) => onAddressDetailsChange({ ...addressDetails, country: e.target.value })}
-                className={inputClass} />
-            </div>
-          </div>
-        </motion.div>
-      )}
+        {/* Paese */}
+        <div className="py-1 border-b border-neutral-200">
+          <label className="block text-[11px] text-neutral-500 pt-2">Paese/area geografica</label>
+          <input type="text" value={addressDetails.country} placeholder="Italia"
+            onChange={(e) => onAddressDetailsChange({ ...addressDetails, country: e.target.value })}
+            className="w-full py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none bg-transparent" />
+        </div>
+
+        {/* Indirizzo */}
+        <div className="py-1 border-b border-neutral-200">
+          <label className="block text-[11px] text-neutral-500 pt-2">Indirizzo</label>
+          <input type="text"
+            value={[addressDetails.street, addressDetails.streetNumber].filter(Boolean).join(", ")}
+            placeholder="Via Roma, 1A"
+            onChange={(e) => {
+              const parts = e.target.value.split(",").map(s => s.trim());
+              onAddressDetailsChange({ ...addressDetails, street: parts[0] || "", streetNumber: parts[1] || "" });
+            }}
+            className="w-full py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none bg-transparent" />
+        </div>
+
+        {/* Scala */}
+        <div className="py-1 border-b border-neutral-200">
+          <input type="text" placeholder="Scala (se disponibile)"
+            className={inputClass} />
+        </div>
+
+        {/* Appartamento */}
+        <div className="py-1 border-b border-neutral-200">
+          <input type="text" placeholder="Appartamento, porta, ecc. (se applicabile)"
+            className={inputClass} />
+        </div>
+
+        {/* CAP */}
+        <div className="py-1 border-b border-neutral-200">
+          <label className="block text-[11px] text-neutral-500 pt-2">CAP</label>
+          <input type="text" value={addressDetails.postalCode} placeholder="00100"
+            onChange={(e) => onAddressDetailsChange({ ...addressDetails, postalCode: e.target.value })}
+            className="w-full py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none bg-transparent" />
+        </div>
+
+        {/* Comune/municipalità */}
+        <div className="py-1 border-b border-neutral-200">
+          <label className="block text-[11px] text-neutral-500 pt-2">Comune/municipalità</label>
+          <input type="text" value={addressDetails.city} placeholder="Roma"
+            onChange={(e) => onAddressDetailsChange({ ...addressDetails, city: e.target.value })}
+            className="w-full py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none bg-transparent" />
+        </div>
+
+        {/* Provincia */}
+        <div className="py-1">
+          <label className="block text-[11px] text-neutral-500 pt-2">Provincia</label>
+          <input type="text" value={addressDetails.province} placeholder="RM"
+            onChange={(e) => onAddressDetailsChange({ ...addressDetails, province: e.target.value })}
+            className="w-full py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none bg-transparent" />
+        </div>
+      </motion.div>
     </div>
   );
 }
@@ -779,16 +815,17 @@ export function AddPropertyFlow() {
       case 1: return true;  // phase 1 intro
       case 2: return category !== null;
       case 3: return spaceType !== null;
-      case 4: return location !== null && addressDetails.city.trim().length > 0;
-      case 5: return params.guests >= 1;
-      case 6: return true;  // phase 2 intro
-      case 7: return true;  // amenities (optional)
-      case 8: return photos.length >= 1; // ideally 5, but allow 1 for testing
-      case 9: return title.trim().length > 0;
-      case 10: return description.trim().length > 0;
-      case 11: return true; // phase 3 intro
-      case 12: return price.length > 0 && parseInt(price) > 0;
-      case 13: return true; // review
+      case 4: return location !== null;  // map pin placed
+      case 5: return addressDetails.city.trim().length > 0;  // address confirmed
+      case 6: return params.guests >= 1;
+      case 7: return true;  // phase 2 intro
+      case 8: return true;  // amenities (optional)
+      case 9: return photos.length >= 1;
+      case 10: return title.trim().length > 0;
+      case 11: return description.trim().length > 0;
+      case 12: return true; // phase 3 intro
+      case 13: return price.length > 0 && parseInt(price) > 0;
+      case 14: return true; // review
       default: return false;
     }
   }
@@ -900,10 +937,11 @@ export function AddPropertyFlow() {
 
             {step === 2 && <StepCategory selected={category} onSelect={setCategory} />}
             {step === 3 && <StepSpaceType selected={spaceType} onSelect={setSpaceType} />}
-            {step === 4 && <StepLocation location={location} addressDetails={addressDetails} onLocationChange={setLocation} onAddressDetailsChange={setAddressDetails} />}
-            {step === 5 && <StepFloorPlan params={params} onChange={setParams} />}
+            {step === 4 && <StepLocationMap location={location} addressDetails={addressDetails} onLocationChange={setLocation} onAddressDetailsChange={setAddressDetails} />}
+            {step === 5 && <StepLocationConfirm addressDetails={addressDetails} onAddressDetailsChange={setAddressDetails} />}
+            {step === 6 && <StepFloorPlan params={params} onChange={setParams} />}
 
-            {step === 6 && (
+            {step === 7 && (
               <PhaseIntro phase="Secondo" title="Fai in modo che si distingua"
                 desc="In questa fase aggiungerai i servizi offerti dal tuo alloggio, oltre a 5 o più foto. Dovrai anche pensare a un titolo e una descrizione.">
                 <div className="w-64 h-64 lg:w-80 lg:h-80 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-50 flex items-center justify-center">
@@ -914,12 +952,12 @@ export function AddPropertyFlow() {
               </PhaseIntro>
             )}
 
-            {step === 7 && <StepAmenities selected={amenities} onToggle={toggleAmenity} />}
-            {step === 8 && <StepPhotos photos={photos} onAddPhotos={(files) => setPhotos((prev) => [...prev, ...files])} />}
-            {step === 9 && <StepTitle value={title} onChange={setTitle} />}
-            {step === 10 && <StepDescription value={description} onChange={setDescription} />}
+            {step === 8 && <StepAmenities selected={amenities} onToggle={toggleAmenity} />}
+            {step === 9 && <StepPhotos photos={photos} onAddPhotos={(files) => setPhotos((prev) => [...prev, ...files])} />}
+            {step === 10 && <StepTitle value={title} onChange={setTitle} />}
+            {step === 11 && <StepDescription value={description} onChange={setDescription} />}
 
-            {step === 11 && (
+            {step === 12 && (
               <PhaseIntro phase="Ultimo" title="Completa e pubblica"
                 desc="Infine, scegli il tuo prezzo di partenza e pubblica il tuo annuncio.">
                 <div className="w-64 h-64 lg:w-80 lg:h-80 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-50 flex items-center justify-center">
@@ -930,8 +968,8 @@ export function AddPropertyFlow() {
               </PhaseIntro>
             )}
 
-            {step === 12 && <StepPrice value={price} onChange={setPrice} />}
-            {step === 13 && <StepReview data={{ category, spaceType, address: fullAddress, params, amenities, photos, title, description, price }} />}
+            {step === 13 && <StepPrice value={price} onChange={setPrice} />}
+            {step === 14 && <StepReview data={{ category, spaceType, address: fullAddress, params, amenities, photos, title, description, price }} />}
           </motion.div>
         </AnimatePresence>
       </main>
