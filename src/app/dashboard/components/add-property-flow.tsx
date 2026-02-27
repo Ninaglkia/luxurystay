@@ -397,24 +397,29 @@ function DraggableMarker({ location, onDragEnd }: {
   return null;
 }
 
-/* Helper: reverse geocode a position */
-function reverseGeocode(
+/* Helper: reverse geocode a position (loads geocoding library dynamically) */
+async function reverseGeocode(
   pos: { lat: number; lng: number },
   onResult: (addr: AddressDetails) => void,
 ) {
-  const geocoder = new google.maps.Geocoder();
-  geocoder.geocode({ location: pos }, (results, status) => {
-    if (status === "OK" && results && results.length > 0) {
-      const streetResult = results.find(r =>
-        r.types.includes("street_address") || r.types.includes("premise")
-      );
-      const routeResult = results.find(r =>
-        r.address_components.some(c => c.types.includes("route"))
-      );
-      const best = streetResult || routeResult || results[0];
-      onResult(parseAddressComponents(best.address_components));
-    }
-  });
+  try {
+    await google.maps.importLibrary("geocoding");
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ location: pos }, (results, status) => {
+      if (status === "OK" && results && results.length > 0) {
+        const streetResult = results.find(r =>
+          r.types.includes("street_address") || r.types.includes("premise")
+        );
+        const routeResult = results.find(r =>
+          r.address_components.some(c => c.types.includes("route"))
+        );
+        const best = streetResult || routeResult || results[0];
+        onResult(parseAddressComponents(best.address_components));
+      }
+    });
+  } catch {
+    // Geocoding failed silently — user can still type address manually
+  }
 }
 
 /* Pans the map to a target and places a temporary marker */
