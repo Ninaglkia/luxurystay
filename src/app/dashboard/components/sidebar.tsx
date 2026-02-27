@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useMode } from "./mode-context";
 
 interface SidebarProps {
   userName: string;
@@ -61,6 +62,7 @@ export function Sidebar({ userName, avatarUrl }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
+  const { mode, setMode } = useMode();
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -99,18 +101,52 @@ export function Sidebar({ userName, avatarUrl }: SidebarProps) {
         </div>
       </Link>
 
-      {/* Add property CTA */}
-      <div className="px-3 mt-2 mb-3">
-        <Link
-          href="/dashboard/add-property"
-          className="flex items-center gap-2 w-full px-3 py-2.5 bg-neutral-900 text-white rounded-lg text-sm font-medium hover:bg-neutral-800 transition-colors"
-        >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          Aggiungi immobile
-        </Link>
+      {/* Mode toggle */}
+      <div className="px-3 mt-2 mb-2">
+        <div className="flex items-center bg-neutral-100 rounded-lg p-1">
+          <button
+            onClick={() => setMode("travel")}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-medium transition-all cursor-pointer ${
+              mode === "travel"
+                ? "bg-white text-neutral-900 shadow-sm"
+                : "text-neutral-500 hover:text-neutral-700"
+            }`}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+            Viaggiatore
+          </button>
+          <button
+            onClick={() => setMode("host")}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-medium transition-all cursor-pointer ${
+              mode === "host"
+                ? "bg-white text-neutral-900 shadow-sm"
+                : "text-neutral-500 hover:text-neutral-700"
+            }`}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+            </svg>
+            Host
+          </button>
+        </div>
       </div>
+
+      {/* Add property CTA — only in host mode */}
+      {mode === "host" && (
+        <div className="px-3 mb-3">
+          <Link
+            href="/dashboard/add-property"
+            className="flex items-center gap-2 w-full px-3 py-2.5 bg-neutral-900 text-white rounded-lg text-sm font-medium hover:bg-neutral-800 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Aggiungi immobile
+          </Link>
+        </div>
+      )}
 
       <div className="h-px bg-neutral-200 mx-6 my-1" />
 

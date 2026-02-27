@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { APIProvider, Map, useMap } from "@vis.gl/react-google-maps";
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
 import { TiltCard } from "./tilt-card";
+import { createClient } from "@/lib/supabase/client";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 const TOTAL_STEPS = 14;
@@ -532,8 +533,11 @@ function StepReview({ data }: { data: {
    ═══════════════════════════════════════════════ */
 export function AddPropertyFlow() {
   const router = useRouter();
+  const supabase = createClient();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState("");
 
   // All form data
   const [category, setCategory] = useState<string | null>(null);
@@ -581,10 +585,64 @@ export function AddPropertyFlow() {
     setLocation({ lat: loc.lat, lng: loc.lng }); setAddress(loc.address);
   }
 
+  async function handlePublish() {
+    if (publishing) return;
+    setPublishing(true);
+    setPublishError("");
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Non autenticato");
+
+      // Upload photos to Supabase Storage
+      const photoUrls: string[] = [];
+      for (const file of photos) {
+        const ext = file.name.split(".").pop() || "jpg";
+        const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from("property-photos")
+          .upload(path, file, { contentType: file.type });
+        if (uploadError) throw new Error(`Errore upload foto: ${uploadError.message}`);
+        const { data: { publicUrl } } = supabase.storage
+          .from("property-photos")
+          .getPublicUrl(path);
+        photoUrls.push(publicUrl);
+      }
+
+      // Insert property
+      const { error: insertError } = await supabase.from("properties").insert({
+        user_id: user.id,
+        category,
+        space_type: spaceType,
+        address,
+        lat: location!.lat,
+        lng: location!.lng,
+        guests: params.guests,
+        bedrooms: params.bedrooms,
+        beds: params.beds,
+        bathrooms: params.bathrooms,
+        amenities,
+        photos: photoUrls,
+        title,
+        description,
+        price: parseInt(price),
+      });
+
+      if (insertError) throw new Error(insertError.message);
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch (err) {
+      setPublishError(err instanceof Error ? err.message : "Errore durante la pubblicazione");
+      setPublishing(false);
+    }
+  }
+
   const progress = (step / (TOTAL_STEPS - 1)) * 100;
 
   // Step label for button
-  const btnLabel = step === 0 ? "Inizia" : step === TOTAL_STEPS - 1 ? "Pubblica annuncio" : "Avanti";
+  const isLastStep = step === TOTAL_STEPS - 1;
+  const btnLabel = step === 0 ? "Inizia" : isLastStep ? (publishing ? "Pubblicazione..." : "Pubblica annuncio") : "Avanti";
 
   const content = (
     <div className="fixed inset-0 z-50 bg-white flex flex-col">
@@ -665,16 +723,19 @@ export function AddPropertyFlow() {
             <button onClick={handleBack}
               className="text-sm font-semibold text-neutral-900 underline underline-offset-4 hover:text-neutral-600 transition-colors cursor-pointer min-h-[44px] flex items-center">Indietro</button>
           ) : <div />}
-          <button onClick={handleNext} disabled={!canProceed()}
-            className={`px-6 lg:px-8 py-3 lg:py-3.5 rounded-lg text-sm font-semibold transition-all min-h-[48px] ${
-              canProceed()
-                ? step === TOTAL_STEPS - 1
-                  ? "bg-gradient-to-r from-rose-500 to-pink-600 text-white hover:from-rose-600 hover:to-pink-700 active:scale-[0.97] cursor-pointer"
-                  : "bg-neutral-900 text-white hover:bg-neutral-800 active:scale-[0.97] cursor-pointer"
-                : "bg-neutral-200 text-neutral-400 cursor-not-allowed"
-            }`}>
-            {btnLabel}
-          </button>
+          <div className="flex items-center gap-3">
+            {publishError && <p className="text-red-500 text-sm">{publishError}</p>}
+            <button onClick={isLastStep ? handlePublish : handleNext} disabled={!canProceed() || publishing}
+              className={`px-6 lg:px-8 py-3 lg:py-3.5 rounded-lg text-sm font-semibold transition-all min-h-[48px] ${
+                canProceed() && !publishing
+                  ? isLastStep
+                    ? "bg-gradient-to-r from-rose-500 to-pink-600 text-white hover:from-rose-600 hover:to-pink-700 active:scale-[0.97] cursor-pointer"
+                    : "bg-neutral-900 text-white hover:bg-neutral-800 active:scale-[0.97] cursor-pointer"
+                  : "bg-neutral-200 text-neutral-400 cursor-not-allowed"
+              }`}>
+              {btnLabel}
+            </button>
+          </div>
         </div>
       </footer>
     </div>

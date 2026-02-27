@@ -5,10 +5,21 @@ import { APIProvider, Map, useMap } from "@vis.gl/react-google-maps";
 import { CitySearch } from "./city-search";
 import { DatePicker } from "./date-picker";
 import { GuestsPicker, type GuestsCount } from "./guests-picker";
+import { createClient } from "@/lib/supabase/client";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 const DEFAULT_CENTER = { lat: 41.9028, lng: 12.4964 };
 const DEFAULT_ZOOM = 6;
+
+interface MapProperty {
+  id: string;
+  title: string;
+  price: number;
+  lat: number;
+  lng: number;
+  photos: string[];
+  category: string;
+}
 
 function UserLocationDot() {
   const map = useMap();
@@ -127,6 +138,82 @@ function MyLocationButton() {
   );
 }
 
+function PropertyMarkers() {
+  const map = useMap();
+  const markersRef = useRef<google.maps.Marker[]>([]);
+  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
+
+  useEffect(() => {
+    if (!map) return;
+    const supabase = createClient();
+
+    async function loadProperties() {
+      const { data } = await supabase
+        .from("properties")
+        .select("id, title, price, lat, lng, photos, category")
+        .eq("status", "active");
+
+      if (!data) return;
+
+      // Clear old markers
+      markersRef.current.forEach(m => m.setMap(null));
+      markersRef.current = [];
+
+      if (!infoWindowRef.current) {
+        infoWindowRef.current = new google.maps.InfoWindow();
+      }
+
+      data.forEach((prop: MapProperty) => {
+        const marker = new google.maps.Marker({
+          map,
+          position: { lat: prop.lat, lng: prop.lng },
+          title: prop.title,
+          label: {
+            text: `€${prop.price}`,
+            color: "#ffffff",
+            fontSize: "12px",
+            fontWeight: "600",
+          },
+          icon: {
+            path: "M-12,-6 L12,-6 L12,6 L12,6 L-12,6 Z",
+            fillColor: "#171717",
+            fillOpacity: 1,
+            strokeColor: "#171717",
+            strokeWeight: 0,
+            scale: 1.3,
+            labelOrigin: new google.maps.Point(0, 0),
+          },
+          zIndex: 100,
+        });
+
+        marker.addListener("click", () => {
+          const photoHtml = prop.photos[0]
+            ? `<img src="${prop.photos[0]}" style="width:200px;height:130px;object-fit:cover;border-radius:8px;margin-bottom:8px;" />`
+            : "";
+          infoWindowRef.current?.setContent(`
+            <div style="padding:4px;min-width:200px;">
+              ${photoHtml}
+              <p style="font-weight:600;font-size:14px;margin:0 0 4px;">${prop.title}</p>
+              <p style="font-size:13px;color:#525252;margin:0;"><strong>€${prop.price}</strong> / notte</p>
+            </div>
+          `);
+          infoWindowRef.current?.open(map, marker);
+        });
+
+        markersRef.current.push(marker);
+      });
+    }
+
+    loadProperties();
+
+    return () => {
+      markersRef.current.forEach(m => m.setMap(null));
+    };
+  }, [map]);
+
+  return null;
+}
+
 // Loading skeleton while map loads
 function MapSkeleton() {
   return (
@@ -203,6 +290,7 @@ export function ExploreMap() {
             onTilesLoaded={() => setMapLoaded(true)}
           />
           <UserLocationDot />
+          <PropertyMarkers />
           <MapController target={target} />
           <MyLocationButton />
         </div>
