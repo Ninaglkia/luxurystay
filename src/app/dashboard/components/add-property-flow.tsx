@@ -290,11 +290,12 @@ function LocationSearch({ onPlaceSelect }: {
 
 function parseAddressComponents(components: google.maps.GeocoderAddressComponent[]): AddressDetails {
   const get = (type: string) => components.find(c => c.types.includes(type))?.long_name || "";
+  const getShort = (type: string) => components.find(c => c.types.includes(type))?.short_name || "";
   return {
     street: get("route"),
     streetNumber: get("street_number"),
     city: get("locality") || get("administrative_area_level_3"),
-    province: get("administrative_area_level_2"),
+    province: getShort("administrative_area_level_2"),
     postalCode: get("postal_code"),
     country: get("country") || "Italia",
   };
