@@ -355,43 +355,101 @@ function DraggableMarker({ location, onDragEnd }: {
   return null;
 }
 
+/* Helper: reverse geocode a position */
+function reverseGeocode(
+  pos: { lat: number; lng: number },
+  onResult: (addr: AddressDetails) => void,
+) {
+  const geocoder = new google.maps.Geocoder();
+  geocoder.geocode({ location: pos }, (results, status) => {
+    if (status === "OK" && results && results.length > 0) {
+      const streetResult = results.find(r =>
+        r.types.includes("street_address") || r.types.includes("premise")
+      );
+      const routeResult = results.find(r =>
+        r.address_components.some(c => c.types.includes("route"))
+      );
+      const best = streetResult || routeResult || results[0];
+      onResult(parseAddressComponents(best.address_components));
+    }
+  });
+}
+
+/* Pans the map to a target and places a temporary marker */
+function MapPanAndMark({ target }: { target: { lat: number; lng: number } | null }) {
+  const map = useMap();
+  const markerRef = useRef<google.maps.Marker | null>(null);
+
+  useEffect(() => {
+    if (!map || !target) return;
+    map.panTo(target);
+    map.setZoom(15);
+
+    if (!markerRef.current) {
+      markerRef.current = new google.maps.Marker({
+        map,
+        position: target,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 10,
+          fillColor: "#171717",
+          fillOpacity: 1,
+          strokeColor: "#ffffff",
+          strokeWeight: 3,
+        },
+      });
+    } else {
+      markerRef.current.setPosition(target);
+    }
+
+    return () => {
+      markerRef.current?.setMap(null);
+      markerRef.current = null;
+    };
+  }, [map, target]);
+
+  return null;
+}
+
 /* Step 4 — "Dove si trova il tuo alloggio?" — Search + use my location */
-function StepLocationSearch({ onLocationSelect, onAddressDetailsChange }: {
+function StepLocationSearch({ location, onLocationSelect, onAddressDetailsChange }: {
+  location: { lat: number; lng: number } | null;
   onLocationSelect: (loc: { lat: number; lng: number }) => void;
   onAddressDetailsChange: (addr: AddressDetails) => void;
 }) {
   const [locating, setLocating] = useState(false);
+  const [geoError, setGeoError] = useState("");
+  const [found, setFound] = useState(false);
 
   function handlePlaceSelect(pos: { lat: number; lng: number }, addr: AddressDetails) {
     onLocationSelect(pos);
     onAddressDetailsChange(addr);
+    setFound(true);
+    setGeoError("");
   }
 
   function handleUseMyLocation() {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      setGeoError("Geolocalizzazione non supportata dal browser");
+      return;
+    }
     setLocating(true);
+    setGeoError("");
     navigator.geolocation.getCurrentPosition(
       (p) => {
-        setLocating(false);
         const pos = { lat: p.coords.latitude, lng: p.coords.longitude };
         onLocationSelect(pos);
-        // Reverse geocode
-        const geocoder = new google.maps.Geocoder();
-        geocoder.geocode({ location: pos }, (results, status) => {
-          if (status === "OK" && results && results.length > 0) {
-            const streetResult = results.find(r =>
-              r.types.includes("street_address") || r.types.includes("premise")
-            );
-            const routeResult = results.find(r =>
-              r.address_components.some(c => c.types.includes("route"))
-            );
-            const best = streetResult || routeResult || results[0];
-            onAddressDetailsChange(parseAddressComponents(best.address_components));
-          }
-        });
+        setFound(true);
+        setLocating(false);
+        reverseGeocode(pos, onAddressDetailsChange);
       },
-      () => setLocating(false),
-      { enableHighAccuracy: true, timeout: 8000 }
+      (err) => {
+        setLocating(false);
+        if (err.code === 1) setGeoError("Permesso negato. Abilita la geolocalizzazione nelle impostazioni del browser.");
+        else if (err.code === 2) setGeoError("Posizione non disponibile. Riprova.");
+        else setGeoError("Timeout. Riprova o cerca l'indirizzo manualmente.");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }
 
@@ -410,6 +468,7 @@ function StepLocationSearch({ onLocationSelect, onAddressDetailsChange }: {
               <Map defaultCenter={{ lat: 41.9028, lng: 12.4964 }} defaultZoom={6}
                 gestureHandling="greedy" disableDefaultUI zoomControl mapId="luxurystay-host-map"
                 style={{ width: "100%", height: "100%" }} />
+              <MapPanAndMark target={location} />
             </div>
             {/* Search overlay */}
             <div className="absolute top-4 left-4 right-4 z-10 space-y-2">
@@ -424,9 +483,26 @@ function StepLocationSearch({ onLocationSelect, onAddressDetailsChange }: {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2m0 16v2M2 12h2m16 0h2" />
                   </svg>
                 )}
-                <span className="text-sm font-medium text-neutral-900">Usa la mia posizione attuale</span>
+                <span className="text-sm font-medium text-neutral-900">
+                  {locating ? "Ricerca posizione..." : "Usa la mia posizione attuale"}
+                </span>
               </button>
             </div>
+            {/* Success feedback */}
+            {found && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 bg-emerald-600 text-white rounded-full px-5 py-2.5 shadow-lg flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                </svg>
+                <span className="text-sm font-medium">Posizione trovata! Premi Avanti</span>
+              </div>
+            )}
+            {/* Error feedback */}
+            {geoError && (
+              <div className="absolute bottom-4 left-4 right-4 z-10 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 shadow-lg">
+                <p className="text-sm">{geoError}</p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="h-[350px] bg-neutral-100 flex items-center justify-center"><p className="text-neutral-400 text-sm">Mappa non disponibile</p></div>
@@ -519,23 +595,9 @@ function StepLocationPin({ location, addressDetails, onLocationChange, onAddress
   onLocationChange: (loc: { lat: number; lng: number }) => void;
   onAddressDetailsChange: (addr: AddressDetails) => void;
 }) {
-  const geocoderRef = useRef<google.maps.Geocoder | null>(null);
-
   function handlePinDrag(pos: { lat: number; lng: number }) {
     onLocationChange(pos);
-    if (!geocoderRef.current) geocoderRef.current = new google.maps.Geocoder();
-    geocoderRef.current.geocode({ location: pos }, (results, status) => {
-      if (status === "OK" && results && results.length > 0) {
-        const streetResult = results.find(r =>
-          r.types.includes("street_address") || r.types.includes("premise")
-        );
-        const routeResult = results.find(r =>
-          r.address_components.some(c => c.types.includes("route"))
-        );
-        const best = streetResult || routeResult || results[0];
-        onAddressDetailsChange(parseAddressComponents(best.address_components));
-      }
-    });
+    reverseGeocode(pos, onAddressDetailsChange);
   }
 
   const displayAddress = [
@@ -980,7 +1042,7 @@ export function AddPropertyFlow() {
 
             {step === 2 && <StepCategory selected={category} onSelect={setCategory} />}
             {step === 3 && <StepSpaceType selected={spaceType} onSelect={setSpaceType} />}
-            {step === 4 && <StepLocationSearch onLocationSelect={setLocation} onAddressDetailsChange={setAddressDetails} />}
+            {step === 4 && <StepLocationSearch location={location} onLocationSelect={setLocation} onAddressDetailsChange={setAddressDetails} />}
             {step === 5 && <StepLocationConfirm addressDetails={addressDetails} onAddressDetailsChange={setAddressDetails} />}
             {step === 6 && location && <StepLocationPin location={location} addressDetails={addressDetails} onLocationChange={setLocation} onAddressDetailsChange={setAddressDetails} />}
             {step === 7 && <StepFloorPlan params={params} onChange={setParams} />}
