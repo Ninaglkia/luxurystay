@@ -9,7 +9,7 @@ import { TiltCard } from "./tilt-card";
 import { createClient } from "@/lib/supabase/client";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
-const TOTAL_STEPS = 15;
+const TOTAL_STEPS = 16;
 const pageTransition = { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const };
 
 /* ═══════════════════════════════════════════════
@@ -355,75 +355,50 @@ function DraggableMarker({ location, onDragEnd }: {
   return null;
 }
 
-/* Step 4a — Map with draggable pin */
-function StepLocationMap({ location, addressDetails, onLocationChange, onAddressDetailsChange }: {
-  location: { lat: number; lng: number } | null;
-  addressDetails: AddressDetails;
-  onLocationChange: (loc: { lat: number; lng: number }) => void;
+/* Step 4 — "Dove si trova il tuo alloggio?" — Search + use my location */
+function StepLocationSearch({ onLocationSelect, onAddressDetailsChange }: {
+  onLocationSelect: (loc: { lat: number; lng: number }) => void;
   onAddressDetailsChange: (addr: AddressDetails) => void;
 }) {
-  const geocoderRef = useRef<google.maps.Geocoder | null>(null);
-  const [geocoding, setGeocoding] = useState(false);
-
-  function reverseGeocode(pos: { lat: number; lng: number }) {
-    if (!geocoderRef.current) geocoderRef.current = new google.maps.Geocoder();
-    setGeocoding(true);
-    geocoderRef.current.geocode({ location: pos }, (results, status) => {
-      setGeocoding(false);
-      if (status === "OK" && results && results.length > 0) {
-        const streetResult = results.find(r =>
-          r.types.includes("street_address") || r.types.includes("premise")
-        );
-        const routeResult = results.find(r =>
-          r.address_components.some(c => c.types.includes("route"))
-        );
-        const best = streetResult || routeResult || results[0];
-        const addr = parseAddressComponents(best.address_components);
-        onAddressDetailsChange(addr);
-      }
-    });
-  }
-
-  function handlePinDrag(pos: { lat: number; lng: number }) {
-    onLocationChange(pos);
-    reverseGeocode(pos);
-  }
+  const [locating, setLocating] = useState(false);
 
   function handlePlaceSelect(pos: { lat: number; lng: number }, addr: AddressDetails) {
-    onLocationChange(pos);
+    onLocationSelect(pos);
     onAddressDetailsChange(addr);
   }
 
-  useEffect(() => {
-    if (location) return;
+  function handleUseMyLocation() {
     if (!navigator.geolocation) return;
+    setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (p) => {
+        setLocating(false);
         const pos = { lat: p.coords.latitude, lng: p.coords.longitude };
-        handlePinDrag(pos);
+        onLocationSelect(pos);
+        // Reverse geocode
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ location: pos }, (results, status) => {
+          if (status === "OK" && results && results.length > 0) {
+            const streetResult = results.find(r =>
+              r.types.includes("street_address") || r.types.includes("premise")
+            );
+            const routeResult = results.find(r =>
+              r.address_components.some(c => c.types.includes("route"))
+            );
+            const best = streetResult || routeResult || results[0];
+            onAddressDetailsChange(parseAddressComponents(best.address_components));
+          }
+        });
       },
-      () => {},
-      { enableHighAccuracy: false, maximumAge: 60000, timeout: 5000 }
+      () => setLocating(false),
+      { enableHighAccuracy: true, timeout: 8000 }
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const mapCenter = location || { lat: 41.9028, lng: 12.4964 };
-  const hasPin = location !== null;
-
-  // Build display address from details
-  const displayAddress = [
-    [addressDetails.street, addressDetails.streetNumber].filter(Boolean).join(" "),
-    addressDetails.city,
-    addressDetails.province,
-    addressDetails.country,
-    addressDetails.postalCode,
-  ].filter(Boolean).join(", ");
+  }
 
   return (
     <div className="max-w-2xl mx-auto w-full">
       <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-        className="text-2xl lg:text-3xl font-bold text-neutral-900 mb-2">Il punto indicato è corretto?</motion.h2>
+        className="text-2xl lg:text-3xl font-bold text-neutral-900 mb-2">Dove si trova il tuo alloggio?</motion.h2>
       <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
         className="text-neutral-500 mb-6">Il tuo indirizzo viene condiviso con gli ospiti solo dopo che hanno effettuato una prenotazione.</motion.p>
 
@@ -431,49 +406,27 @@ function StepLocationMap({ location, addressDetails, onLocationChange, onAddress
         className="rounded-2xl overflow-hidden border border-neutral-200 shadow-sm">
         {GOOGLE_MAPS_API_KEY ? (
           <div className="relative">
-            {/* Address bar on top of map */}
-            {hasPin && displayAddress && (
-              <div className="absolute top-4 left-4 right-4 z-10">
-                <div className="bg-white rounded-xl shadow-lg px-4 py-3 flex items-center gap-3">
-                  <svg className="w-5 h-5 text-neutral-700 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                  </svg>
-                  <p className="text-sm font-medium text-neutral-900 truncate">{displayAddress}</p>
-                </div>
-              </div>
-            )}
             <div className="h-[350px] lg:h-[420px]">
-              <Map defaultCenter={mapCenter} defaultZoom={hasPin ? 16 : 6}
+              <Map defaultCenter={{ lat: 41.9028, lng: 12.4964 }} defaultZoom={6}
                 gestureHandling="greedy" disableDefaultUI zoomControl mapId="luxurystay-host-map"
-                style={{ width: "100%", height: "100%" }}
-                onClick={(e) => {
-                  if (e.detail.latLng) {
-                    handlePinDrag({ lat: e.detail.latLng.lat, lng: e.detail.latLng.lng });
-                  }
-                }}
-              />
-              {hasPin && <DraggableMarker location={location} onDragEnd={handlePinDrag} />}
+                style={{ width: "100%", height: "100%" }} />
             </div>
-            {/* Search — only when no pin yet */}
-            {!hasPin && (
-              <div className="absolute top-4 left-4 right-4 z-10">
-                <LocationSearch onPlaceSelect={handlePlaceSelect} />
-              </div>
-            )}
-            {!hasPin && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="bg-white/90 backdrop-blur-sm rounded-xl px-5 py-3 shadow-lg">
-                  <p className="text-sm font-medium text-neutral-700">Clicca o cerca per posizionare il segnaposto</p>
-                </div>
-              </div>
-            )}
-            {geocoding && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white rounded-full px-4 py-2 shadow-lg flex items-center gap-2">
-                <div className="w-3 h-3 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin" />
-                <span className="text-xs text-neutral-600">Ricerca indirizzo...</span>
-              </div>
-            )}
+            {/* Search overlay */}
+            <div className="absolute top-4 left-4 right-4 z-10 space-y-2">
+              <LocationSearch onPlaceSelect={handlePlaceSelect} />
+              <button onClick={handleUseMyLocation} disabled={locating}
+                className="w-full bg-white rounded-xl shadow-lg px-4 py-3 flex items-center gap-3 hover:bg-neutral-50 transition-colors cursor-pointer disabled:opacity-60">
+                {locating ? (
+                  <div className="w-5 h-5 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin shrink-0" />
+                ) : (
+                  <svg className="w-5 h-5 text-neutral-700 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 12m-3 0a3 3 0 1 0 6 0 3 3 0 1 0-6 0" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2m0 16v2M2 12h2m16 0h2" />
+                  </svg>
+                )}
+                <span className="text-sm font-medium text-neutral-900">Usa la mia posizione attuale</span>
+              </button>
+            </div>
           </div>
         ) : (
           <div className="h-[350px] bg-neutral-100 flex items-center justify-center"><p className="text-neutral-400 text-sm">Mappa non disponibile</p></div>
@@ -483,13 +436,11 @@ function StepLocationMap({ location, addressDetails, onLocationChange, onAddress
   );
 }
 
-/* Step 4b — Confirm address form */
+/* Step 5 — "Conferma il tuo indirizzo" — Address form */
 function StepLocationConfirm({ addressDetails, onAddressDetailsChange }: {
   addressDetails: AddressDetails;
   onAddressDetailsChange: (addr: AddressDetails) => void;
 }) {
-  const inputClass = "w-full border-b border-neutral-200 px-0 py-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-900 transition-colors bg-transparent";
-
   return (
     <div className="max-w-lg mx-auto w-full">
       <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
@@ -524,13 +475,13 @@ function StepLocationConfirm({ addressDetails, onAddressDetailsChange }: {
         {/* Scala */}
         <div className="py-1 border-b border-neutral-200">
           <input type="text" placeholder="Scala (se disponibile)"
-            className={inputClass} />
+            className="w-full py-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none bg-transparent" />
         </div>
 
         {/* Appartamento */}
         <div className="py-1 border-b border-neutral-200">
           <input type="text" placeholder="Appartamento, porta, ecc. (se applicabile)"
-            className={inputClass} />
+            className="w-full py-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none bg-transparent" />
         </div>
 
         {/* CAP */}
@@ -555,6 +506,97 @@ function StepLocationConfirm({ addressDetails, onAddressDetailsChange }: {
           <input type="text" value={addressDetails.province} placeholder="RM"
             onChange={(e) => onAddressDetailsChange({ ...addressDetails, province: e.target.value })}
             className="w-full py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none bg-transparent" />
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+/* Step 6 — "Il punto indicato è corretto?" — Draggable pin */
+function StepLocationPin({ location, addressDetails, onLocationChange, onAddressDetailsChange }: {
+  location: { lat: number; lng: number };
+  addressDetails: AddressDetails;
+  onLocationChange: (loc: { lat: number; lng: number }) => void;
+  onAddressDetailsChange: (addr: AddressDetails) => void;
+}) {
+  const geocoderRef = useRef<google.maps.Geocoder | null>(null);
+
+  function handlePinDrag(pos: { lat: number; lng: number }) {
+    onLocationChange(pos);
+    if (!geocoderRef.current) geocoderRef.current = new google.maps.Geocoder();
+    geocoderRef.current.geocode({ location: pos }, (results, status) => {
+      if (status === "OK" && results && results.length > 0) {
+        const streetResult = results.find(r =>
+          r.types.includes("street_address") || r.types.includes("premise")
+        );
+        const routeResult = results.find(r =>
+          r.address_components.some(c => c.types.includes("route"))
+        );
+        const best = streetResult || routeResult || results[0];
+        onAddressDetailsChange(parseAddressComponents(best.address_components));
+      }
+    });
+  }
+
+  const displayAddress = [
+    [addressDetails.street, addressDetails.streetNumber].filter(Boolean).join(" "),
+    addressDetails.postalCode,
+    addressDetails.city,
+    addressDetails.province,
+    addressDetails.country,
+  ].filter(Boolean).join(", ");
+
+  return (
+    <div className="max-w-2xl mx-auto w-full">
+      <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+        className="text-2xl lg:text-3xl font-bold text-neutral-900 mb-2">Il punto indicato è corretto?</motion.h2>
+      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
+        className="text-neutral-500 mb-6">Il tuo indirizzo viene condiviso con gli ospiti solo dopo che hanno effettuato una prenotazione.</motion.p>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+        className="rounded-2xl overflow-hidden border border-neutral-200 shadow-sm">
+        <div className="relative">
+          {/* Address bar */}
+          <div className="absolute top-4 left-4 right-4 z-10">
+            <div className="bg-white rounded-xl shadow-lg px-4 py-3 flex items-center gap-3">
+              <svg className="w-5 h-5 text-neutral-700 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+              </svg>
+              <p className="text-sm font-medium text-neutral-900 truncate">{displayAddress}</p>
+            </div>
+          </div>
+
+          <div className="h-[350px] lg:h-[420px]">
+            <Map defaultCenter={location} defaultZoom={17}
+              gestureHandling="greedy" disableDefaultUI zoomControl mapId="luxurystay-host-map"
+              style={{ width: "100%", height: "100%" }} />
+            <DraggableMarker location={location} onDragEnd={handlePinDrag} />
+          </div>
+
+          {/* Hint banner */}
+          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-10">
+            <div className="bg-neutral-900/90 text-white rounded-full px-5 py-2.5 shadow-lg">
+              <p className="text-sm font-medium">Trascina la mappa per riposizionare il puntatore</p>
+            </div>
+          </div>
+
+          {/* My location button */}
+          <button
+            onClick={() => {
+              if (!navigator.geolocation) return;
+              navigator.geolocation.getCurrentPosition(
+                (p) => handlePinDrag({ lat: p.coords.latitude, lng: p.coords.longitude }),
+                () => {},
+                { enableHighAccuracy: true, timeout: 5000 }
+              );
+            }}
+            className="absolute bottom-4 right-4 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-neutral-50 transition-colors cursor-pointer"
+          >
+            <svg className="w-5 h-5 text-neutral-700" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 12m-3 0a3 3 0 1 0 6 0 3 3 0 1 0-6 0" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2m0 16v2M2 12h2m16 0h2" />
+            </svg>
+          </button>
         </div>
       </motion.div>
     </div>
@@ -815,17 +857,18 @@ export function AddPropertyFlow() {
       case 1: return true;  // phase 1 intro
       case 2: return category !== null;
       case 3: return spaceType !== null;
-      case 4: return location !== null;  // map pin placed
-      case 5: return addressDetails.city.trim().length > 0;  // address confirmed
-      case 6: return params.guests >= 1;
-      case 7: return true;  // phase 2 intro
-      case 8: return true;  // amenities (optional)
-      case 9: return photos.length >= 1;
-      case 10: return title.trim().length > 0;
-      case 11: return description.trim().length > 0;
-      case 12: return true; // phase 3 intro
-      case 13: return price.length > 0 && parseInt(price) > 0;
-      case 14: return true; // review
+      case 4: return location !== null;  // "Dove si trova?" — search/geolocate
+      case 5: return addressDetails.city.trim().length > 0;  // "Conferma indirizzo" — form
+      case 6: return true;  // "Il punto è corretto?" — draggable pin
+      case 7: return params.guests >= 1;
+      case 8: return true;  // phase 2 intro
+      case 9: return true;  // amenities (optional)
+      case 10: return photos.length >= 1;
+      case 11: return title.trim().length > 0;
+      case 12: return description.trim().length > 0;
+      case 13: return true; // phase 3 intro
+      case 14: return price.length > 0 && parseInt(price) > 0;
+      case 15: return true; // review
       default: return false;
     }
   }
@@ -937,11 +980,12 @@ export function AddPropertyFlow() {
 
             {step === 2 && <StepCategory selected={category} onSelect={setCategory} />}
             {step === 3 && <StepSpaceType selected={spaceType} onSelect={setSpaceType} />}
-            {step === 4 && <StepLocationMap location={location} addressDetails={addressDetails} onLocationChange={setLocation} onAddressDetailsChange={setAddressDetails} />}
+            {step === 4 && <StepLocationSearch onLocationSelect={setLocation} onAddressDetailsChange={setAddressDetails} />}
             {step === 5 && <StepLocationConfirm addressDetails={addressDetails} onAddressDetailsChange={setAddressDetails} />}
-            {step === 6 && <StepFloorPlan params={params} onChange={setParams} />}
+            {step === 6 && location && <StepLocationPin location={location} addressDetails={addressDetails} onLocationChange={setLocation} onAddressDetailsChange={setAddressDetails} />}
+            {step === 7 && <StepFloorPlan params={params} onChange={setParams} />}
 
-            {step === 7 && (
+            {step === 8 && (
               <PhaseIntro phase="Secondo" title="Fai in modo che si distingua"
                 desc="In questa fase aggiungerai i servizi offerti dal tuo alloggio, oltre a 5 o più foto. Dovrai anche pensare a un titolo e una descrizione.">
                 <div className="w-64 h-64 lg:w-80 lg:h-80 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-50 flex items-center justify-center">
@@ -952,12 +996,12 @@ export function AddPropertyFlow() {
               </PhaseIntro>
             )}
 
-            {step === 8 && <StepAmenities selected={amenities} onToggle={toggleAmenity} />}
-            {step === 9 && <StepPhotos photos={photos} onAddPhotos={(files) => setPhotos((prev) => [...prev, ...files])} />}
-            {step === 10 && <StepTitle value={title} onChange={setTitle} />}
-            {step === 11 && <StepDescription value={description} onChange={setDescription} />}
+            {step === 9 && <StepAmenities selected={amenities} onToggle={toggleAmenity} />}
+            {step === 10 && <StepPhotos photos={photos} onAddPhotos={(files) => setPhotos((prev) => [...prev, ...files])} />}
+            {step === 11 && <StepTitle value={title} onChange={setTitle} />}
+            {step === 12 && <StepDescription value={description} onChange={setDescription} />}
 
-            {step === 12 && (
+            {step === 13 && (
               <PhaseIntro phase="Ultimo" title="Completa e pubblica"
                 desc="Infine, scegli il tuo prezzo di partenza e pubblica il tuo annuncio.">
                 <div className="w-64 h-64 lg:w-80 lg:h-80 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-50 flex items-center justify-center">
@@ -968,8 +1012,8 @@ export function AddPropertyFlow() {
               </PhaseIntro>
             )}
 
-            {step === 13 && <StepPrice value={price} onChange={setPrice} />}
-            {step === 14 && <StepReview data={{ category, spaceType, address: fullAddress, params, amenities, photos, title, description, price }} />}
+            {step === 14 && <StepPrice value={price} onChange={setPrice} />}
+            {step === 15 && <StepReview data={{ category, spaceType, address: fullAddress, params, amenities, photos, title, description, price }} />}
           </motion.div>
         </AnimatePresence>
       </main>
