@@ -392,7 +392,7 @@ function MapPanAndMark({ target }: { target: { lat: number; lng: number } | null
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
           scale: 10,
-          fillColor: "#171717",
+          fillColor: "#4285F4",
           fillOpacity: 1,
           strokeColor: "#ffffff",
           strokeWeight: 3,
