@@ -140,14 +140,24 @@ function MyLocationButton() {
 
 function PropertyMarkers() {
   const map = useMap();
-  const markersRef = useRef<google.maps.Marker[]>([]);
-  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
+  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!map) return;
     const supabase = createClient();
 
+    // Create shared hover overlay
+    if (!overlayRef.current) {
+      const el = document.createElement("div");
+      el.style.cssText = "position:fixed;z-index:9999;pointer-events:none;opacity:0;transition:opacity .2s;";
+      document.body.appendChild(el);
+      overlayRef.current = el;
+    }
+
     async function loadProperties() {
+      await google.maps.importLibrary("marker");
+
       const { data } = await supabase
         .from("properties")
         .select("id, title, price, lat, lng, photos, category")
@@ -156,48 +166,85 @@ function PropertyMarkers() {
       if (!data) return;
 
       // Clear old markers
-      markersRef.current.forEach(m => m.setMap(null));
+      markersRef.current.forEach(m => (m.map = null));
       markersRef.current = [];
 
-      if (!infoWindowRef.current) {
-        infoWindowRef.current = new google.maps.InfoWindow();
-      }
-
       data.forEach((prop: MapProperty) => {
-        const marker = new google.maps.Marker({
+        // 3D house marker element
+        const el = document.createElement("div");
+        el.style.cssText = "cursor:pointer;transition:transform .2s;";
+        el.innerHTML = `
+          <div style="perspective:60px;">
+            <div style="width:42px;height:42px;background:#171717;border-radius:10px;display:flex;align-items:center;justify-content:center;transform:rotateX(12deg);box-shadow:0 6px 16px rgba(0,0,0,.35),0 2px 4px rgba(0,0,0,.2);border:2px solid #fff;transition:transform .2s,box-shadow .2s;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+            </div>
+            <div style="width:10px;height:10px;background:#171717;border-radius:50%;margin:-4px auto 0;box-shadow:0 2px 6px rgba(0,0,0,.3);"></div>
+          </div>
+        `;
+
+        const marker = new google.maps.marker.AdvancedMarkerElement({
           map,
           position: { lat: prop.lat, lng: prop.lng },
+          content: el,
           title: prop.title,
-          label: {
-            text: `€${prop.price}`,
-            color: "#ffffff",
-            fontSize: "12px",
-            fontWeight: "600",
-          },
-          icon: {
-            path: "M-12,-6 L12,-6 L12,6 L12,6 L-12,6 Z",
-            fillColor: "#171717",
-            fillOpacity: 1,
-            strokeColor: "#171717",
-            strokeWeight: 0,
-            scale: 1.3,
-            labelOrigin: new google.maps.Point(0, 0),
-          },
           zIndex: 100,
         });
 
-        marker.addListener("click", () => {
+        // Hover — show preview card
+        el.addEventListener("mouseenter", (e) => {
+          // Scale up marker
+          const inner = el.querySelector("div > div") as HTMLElement;
+          if (inner) {
+            inner.style.transform = "rotateX(0deg) scale(1.15)";
+            inner.style.boxShadow = "0 10px 24px rgba(0,0,0,.4),0 4px 8px rgba(0,0,0,.25)";
+          }
+          el.style.zIndex = "200";
+
+          // Show overlay
+          const overlay = overlayRef.current;
+          if (!overlay) return;
           const photoHtml = prop.photos[0]
-            ? `<img src="${prop.photos[0]}" style="width:200px;height:130px;object-fit:cover;border-radius:8px;margin-bottom:8px;" />`
-            : "";
-          infoWindowRef.current?.setContent(`
-            <div style="padding:4px;min-width:200px;">
+            ? `<img src="${prop.photos[0]}" style="width:100%;height:120px;object-fit:cover;border-radius:8px 8px 0 0;" />`
+            : `<div style="width:100%;height:120px;background:#f5f5f5;border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:center;"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d4d4d4" stroke-width="1"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>`;
+          overlay.innerHTML = `
+            <div style="width:220px;background:#fff;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.18);overflow:hidden;">
               ${photoHtml}
-              <p style="font-weight:600;font-size:14px;margin:0 0 4px;">${prop.title}</p>
-              <p style="font-size:13px;color:#525252;margin:0;"><strong>€${prop.price}</strong> / notte</p>
+              <div style="padding:10px 12px;">
+                <p style="font-weight:600;font-size:13px;color:#171717;margin:0 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${prop.title}</p>
+                <p style="font-size:13px;color:#525252;margin:0;"><strong style="color:#171717;">€${prop.price}</strong> / notte</p>
+              </div>
             </div>
-          `);
-          infoWindowRef.current?.open(map, marker);
+          `;
+          overlay.style.left = `${(e as MouseEvent).clientX + 16}px`;
+          overlay.style.top = `${(e as MouseEvent).clientY - 20}px`;
+          overlay.style.opacity = "1";
+        });
+
+        el.addEventListener("mousemove", (e) => {
+          const overlay = overlayRef.current;
+          if (overlay) {
+            overlay.style.left = `${(e as MouseEvent).clientX + 16}px`;
+            overlay.style.top = `${(e as MouseEvent).clientY - 20}px`;
+          }
+        });
+
+        el.addEventListener("mouseleave", () => {
+          const inner = el.querySelector("div > div") as HTMLElement;
+          if (inner) {
+            inner.style.transform = "rotateX(12deg)";
+            inner.style.boxShadow = "0 6px 16px rgba(0,0,0,.35),0 2px 4px rgba(0,0,0,.2)";
+          }
+          el.style.zIndex = "100";
+          const overlay = overlayRef.current;
+          if (overlay) overlay.style.opacity = "0";
+        });
+
+        // Click — navigate to property page
+        el.addEventListener("click", () => {
+          window.location.href = `/dashboard/property/${prop.id}`;
         });
 
         markersRef.current.push(marker);
@@ -207,9 +254,17 @@ function PropertyMarkers() {
     loadProperties();
 
     return () => {
-      markersRef.current.forEach(m => m.setMap(null));
+      markersRef.current.forEach(m => (m.map = null));
     };
   }, [map]);
+
+  // Cleanup overlay on unmount
+  useEffect(() => {
+    return () => {
+      overlayRef.current?.remove();
+      overlayRef.current = null;
+    };
+  }, []);
 
   return null;
 }
@@ -262,7 +317,7 @@ export function ExploreMap() {
   }
 
   return (
-    <APIProvider apiKey={GOOGLE_MAPS_API_KEY} libraries={["places"]}>
+    <APIProvider apiKey={GOOGLE_MAPS_API_KEY} libraries={["places", "marker"]}>
       <div className="flex-1 flex flex-col gap-3 lg:gap-4 min-h-0">
         {/* Search controls — stacked on mobile, row on desktop */}
         <div className="flex flex-col lg:flex-row lg:items-start gap-2 lg:gap-3">
