@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { APIProvider, Map, useMap } from "@vis.gl/react-google-maps";
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
+import { TiltCard } from "./tilt-card";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 const TOTAL_STEPS = 14;
@@ -143,12 +144,15 @@ function StepCategory({ selected, onSelect }: { selected: string | null; onSelec
         className="text-2xl lg:text-3xl font-bold text-neutral-900 text-center mb-8">Che tipo di alloggio è il tuo?</motion.h2>
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
         {categories.map((cat, i) => (
-          <motion.button key={cat.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-            onClick={() => onSelect(cat.id)}
-            className={`flex flex-col items-start gap-3 p-4 lg:p-5 rounded-xl border-2 transition-all cursor-pointer text-left min-h-[100px] ${selected === cat.id ? "border-neutral-900 bg-neutral-50" : "border-neutral-200 hover:border-neutral-400 bg-white"}`}>
-            <svg className="w-7 h-7 text-neutral-700" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">{cat.icon}</svg>
-            <span className="text-sm font-medium text-neutral-900">{cat.label}</span>
-          </motion.button>
+          <motion.div key={cat.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
+            <TiltCard
+              onClick={() => onSelect(cat.id)}
+              intensity={12}
+              className={`flex flex-col items-start gap-3 p-4 lg:p-5 rounded-xl border-2 transition-all text-left min-h-[100px] ${selected === cat.id ? "border-neutral-900 bg-neutral-50 shadow-lg" : "border-neutral-200 hover:border-neutral-400 bg-white"}`}>
+              <svg className="w-7 h-7 text-neutral-700" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">{cat.icon}</svg>
+              <span className="text-sm font-medium text-neutral-900">{cat.label}</span>
+            </TiltCard>
+          </motion.div>
         ))}
       </div>
     </div>
@@ -176,15 +180,18 @@ function StepSpaceType({ selected, onSelect }: { selected: string | null; onSele
       </motion.h2>
       <div className="space-y-3">
         {spaceTypes.map((st, i) => (
-          <motion.button key={st.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
-            onClick={() => onSelect(st.id)}
-            className={`w-full flex items-center gap-4 p-5 rounded-xl border-2 transition-all cursor-pointer text-left ${selected === st.id ? "border-neutral-900 bg-neutral-50" : "border-neutral-200 hover:border-neutral-400 bg-white"}`}>
-            <svg className="w-8 h-8 text-neutral-700 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">{st.icon}</svg>
-            <div>
-              <p className="text-base font-semibold text-neutral-900">{st.label}</p>
-              <p className="text-sm text-neutral-500 mt-0.5">{st.desc}</p>
-            </div>
-          </motion.button>
+          <motion.div key={st.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
+            <TiltCard
+              onClick={() => onSelect(st.id)}
+              intensity={8}
+              className={`w-full flex items-center gap-4 p-5 rounded-xl border-2 transition-all text-left ${selected === st.id ? "border-neutral-900 bg-neutral-50 shadow-lg" : "border-neutral-200 hover:border-neutral-400 bg-white"}`}>
+              <svg className="w-8 h-8 text-neutral-700 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">{st.icon}</svg>
+              <div>
+                <p className="text-base font-semibold text-neutral-900">{st.label}</p>
+                <p className="text-sm text-neutral-500 mt-0.5">{st.desc}</p>
+              </div>
+            </TiltCard>
+          </motion.div>
         ))}
       </div>
     </div>
