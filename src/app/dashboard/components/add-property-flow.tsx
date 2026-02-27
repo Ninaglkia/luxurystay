@@ -211,19 +211,25 @@ interface AddressDetails {
   country: string;
 }
 
-function LocationSearch({ onPlaceSelect, onUseMyLocation, locating }: {
+function LocationSearch({ onPlaceSelect, onUseMyLocation, locating, displayAddress }: {
   onPlaceSelect: (loc: { lat: number; lng: number }, address: AddressDetails) => void;
   onUseMyLocation?: () => void;
   locating?: boolean;
+  displayAddress?: string;
 }) {
   const placesLib = useMapsLibrary("places");
   const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
   const placesService = useRef<google.maps.places.PlacesService | null>(null);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(displayAddress || "");
   const [predictions, setPredictions] = useState<google.maps.places.AutocompletePrediction[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [showMyLocation, setShowMyLocation] = useState(!!onUseMyLocation);
+
+  // Sync from parent (e.g. after pin drag updates address)
+  useEffect(() => {
+    if (displayAddress !== undefined) setQuery(displayAddress);
+  }, [displayAddress]);
 
   useEffect(() => {
     if (!placesLib) return;
@@ -609,6 +615,15 @@ function StepLocationPin({ location, addressDetails, onLocationChange, onAddress
   onAddressDetailsChange: (addr: AddressDetails) => void;
   onNewCitySearch: () => void;
 }) {
+  // Build display address from current addressDetails
+  const displayAddress = [
+    [addressDetails.street, addressDetails.streetNumber].filter(Boolean).join(" "),
+    addressDetails.postalCode,
+    addressDetails.city,
+    addressDetails.province,
+    addressDetails.country,
+  ].filter(Boolean).join(", ");
+
   function handlePinDrag(pos: { lat: number; lng: number }) {
     onLocationChange(pos);
     reverseGeocode(pos, onAddressDetailsChange);
@@ -630,9 +645,9 @@ function StepLocationPin({ location, addressDetails, onLocationChange, onAddress
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
         className="rounded-2xl overflow-hidden border border-neutral-200 shadow-sm">
         <div className="relative">
-          {/* Searchable address bar */}
+          {/* Searchable address bar — pre-filled with current address, updates on pin drag */}
           <div className="absolute top-4 left-4 right-4 z-10">
-            <LocationSearch onPlaceSelect={handleSearchSelect} />
+            <LocationSearch onPlaceSelect={handleSearchSelect} displayAddress={displayAddress} />
           </div>
 
           <div className="h-[350px] lg:h-[420px]">
@@ -926,7 +941,7 @@ export function AddPropertyFlow() {
       case 1: return true;  // phase 1 intro
       case 2: return category !== null;
       case 3: return spaceType !== null;
-      case 4: return location !== null;  // "Dove si trova?" — search/geolocate
+      case 4: return location !== null && addressDetails.city.trim().length > 0;  // "Dove si trova?" — wait for reverse geocoding too
       case 5: return addressDetails.city.trim().length > 0;  // "Conferma indirizzo" — form
       case 6: return true;  // "Il punto è corretto?" — draggable pin
       case 7: return params.guests >= 1;
