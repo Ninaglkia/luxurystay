@@ -601,25 +601,24 @@ function StepLocationConfirm({ addressDetails, onAddressDetailsChange }: {
   );
 }
 
-/* Step 6 — "Il punto indicato è corretto?" — Draggable pin */
-function StepLocationPin({ location, addressDetails, onLocationChange, onAddressDetailsChange }: {
+/* Step 6 — "Il punto indicato è corretto?" — Draggable pin + search */
+function StepLocationPin({ location, addressDetails, onLocationChange, onAddressDetailsChange, onNewCitySearch }: {
   location: { lat: number; lng: number };
   addressDetails: AddressDetails;
   onLocationChange: (loc: { lat: number; lng: number }) => void;
   onAddressDetailsChange: (addr: AddressDetails) => void;
+  onNewCitySearch: () => void;
 }) {
   function handlePinDrag(pos: { lat: number; lng: number }) {
     onLocationChange(pos);
     reverseGeocode(pos, onAddressDetailsChange);
   }
 
-  const displayAddress = [
-    [addressDetails.street, addressDetails.streetNumber].filter(Boolean).join(" "),
-    addressDetails.postalCode,
-    addressDetails.city,
-    addressDetails.province,
-    addressDetails.country,
-  ].filter(Boolean).join(", ");
+  function handleSearchSelect(pos: { lat: number; lng: number }, addr: AddressDetails) {
+    onLocationChange(pos);
+    onAddressDetailsChange(addr);
+    onNewCitySearch();
+  }
 
   return (
     <div className="max-w-2xl mx-auto w-full">
@@ -631,14 +630,9 @@ function StepLocationPin({ location, addressDetails, onLocationChange, onAddress
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
         className="rounded-2xl overflow-hidden border border-neutral-200 shadow-sm">
         <div className="relative">
-          {/* Address bar */}
+          {/* Searchable address bar */}
           <div className="absolute top-4 left-4 right-4 z-10">
-            <div className="bg-white rounded-xl shadow-lg px-4 py-3 flex items-center gap-3">
-              <svg className="w-5 h-5 text-neutral-700 shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-              </svg>
-              <p className="text-sm font-medium text-neutral-900 truncate">{displayAddress}</p>
-            </div>
+            <LocationSearch onPlaceSelect={handleSearchSelect} />
           </div>
 
           <div className="h-[350px] lg:h-[420px]">
@@ -1057,7 +1051,7 @@ export function AddPropertyFlow() {
             {step === 3 && <StepSpaceType selected={spaceType} onSelect={setSpaceType} />}
             {step === 4 && <StepLocationSearch location={location} onLocationSelect={setLocation} onAddressDetailsChange={setAddressDetails} />}
             {step === 5 && <StepLocationConfirm addressDetails={addressDetails} onAddressDetailsChange={setAddressDetails} />}
-            {step === 6 && location && <StepLocationPin location={location} addressDetails={addressDetails} onLocationChange={setLocation} onAddressDetailsChange={setAddressDetails} />}
+            {step === 6 && location && <StepLocationPin location={location} addressDetails={addressDetails} onLocationChange={setLocation} onAddressDetailsChange={setAddressDetails} onNewCitySearch={() => { setDirection(-1); setStep(5); }} />}
             {step === 7 && <StepFloorPlan params={params} onChange={setParams} />}
 
             {step === 8 && (
