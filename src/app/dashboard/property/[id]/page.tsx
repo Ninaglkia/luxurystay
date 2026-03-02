@@ -212,7 +212,7 @@ export default function PropertyPage() {
       checkout: checkOut,
       guests: String(guestCount),
     });
-    router.push(`/dashboard/property/${property.id}/book?${params}`);
+    router.push(`/property/${property.id}/book?${params}`);
   }
 
   function formatDate(dateStr: string): string {

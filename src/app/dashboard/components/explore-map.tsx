@@ -24,6 +24,204 @@ interface MapProperty {
   bedrooms: number;
   beds: number;
   bathrooms: number;
+  guests: number;
+  amenities: string[];
+}
+
+/* ═══════════════ Filter types ═══════════════ */
+
+interface Filters {
+  priceMin: number;
+  priceMax: number;
+  category: string;
+  bedroomsMin: number;
+  guestsMin: number;
+  amenities: string[];
+}
+
+const DEFAULT_FILTERS: Filters = {
+  priceMin: 0,
+  priceMax: 10000,
+  category: "",
+  bedroomsMin: 0,
+  guestsMin: 0,
+  amenities: [],
+};
+
+const CATEGORIES = [
+  { value: "", label: "Tutte" },
+  { value: "villa", label: "Villa" },
+  { value: "appartamento", label: "Appartamento" },
+  { value: "casa", label: "Casa" },
+  { value: "loft", label: "Loft" },
+  { value: "baita", label: "Baita" },
+  { value: "bb", label: "B&B" },
+  { value: "castello", label: "Castello" },
+  { value: "barca", label: "Barca" },
+  { value: "camper", label: "Camper" },
+];
+
+const FILTER_AMENITIES = [
+  { value: "piscina", label: "Piscina" },
+  { value: "wifi", label: "Wi-Fi" },
+  { value: "aria", label: "Aria condiz." },
+  { value: "parcheggio", label: "Parcheggio" },
+  { value: "giardino", label: "Giardino" },
+  { value: "animali", label: "Animali" },
+  { value: "cucina", label: "Cucina" },
+  { value: "lavatrice", label: "Lavatrice" },
+];
+
+/* ═══════════════ FiltersPanel ═══════════════ */
+
+function FiltersPanel({ filters, onChange, onClose, resultCount }: {
+  filters: Filters;
+  onChange: (f: Filters) => void;
+  onClose: () => void;
+  resultCount: number;
+}) {
+  const [local, setLocal] = useState<Filters>(filters);
+
+  function toggleAmenity(a: string) {
+    setLocal(prev => ({
+      ...prev,
+      amenities: prev.amenities.includes(a)
+        ? prev.amenities.filter(x => x !== a)
+        : [...prev.amenities, a],
+    }));
+  }
+
+  function handleApply() {
+    onChange(local);
+    onClose();
+  }
+
+  function handleReset() {
+    setLocal(DEFAULT_FILTERS);
+    onChange(DEFAULT_FILTERS);
+    onClose();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+      <div className="relative bg-white rounded-t-2xl lg:rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl"
+        onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="sticky top-0 bg-white border-b border-neutral-200 flex items-center justify-between px-5 py-4 z-10">
+          <button onClick={onClose} className="text-sm font-medium text-neutral-500 hover:text-neutral-900 cursor-pointer">Chiudi</button>
+          <h3 className="text-base font-semibold text-neutral-900">Filtri</h3>
+          <button onClick={handleReset} className="text-sm font-medium text-neutral-500 hover:text-neutral-900 cursor-pointer">Resetta</button>
+        </div>
+
+        <div className="p-5 space-y-6">
+          {/* Price range */}
+          <div>
+            <h4 className="text-sm font-semibold text-neutral-900 mb-3">Fascia di prezzo (a notte)</h4>
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <label className="text-xs text-neutral-500 mb-1 block">Min</label>
+                <input type="number" min={0} step={10} value={local.priceMin || ""}
+                  onChange={e => setLocal(p => ({ ...p, priceMin: Number(e.target.value) || 0 }))}
+                  placeholder="0"
+                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-900 focus:ring-1 focus:ring-neutral-900 focus:border-neutral-900 outline-none" />
+              </div>
+              <span className="text-neutral-400 mt-5">&mdash;</span>
+              <div className="flex-1">
+                <label className="text-xs text-neutral-500 mb-1 block">Max</label>
+                <input type="number" min={0} step={10} value={local.priceMax >= 10000 ? "" : local.priceMax}
+                  onChange={e => setLocal(p => ({ ...p, priceMax: Number(e.target.value) || 10000 }))}
+                  placeholder="Qualsiasi"
+                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-900 focus:ring-1 focus:ring-neutral-900 focus:border-neutral-900 outline-none" />
+              </div>
+            </div>
+            {/* Quick price buttons */}
+            <div className="flex gap-2 mt-2">
+              {[100, 200, 500, 1000].map(v => (
+                <button key={v} onClick={() => setLocal(p => ({ ...p, priceMax: v }))}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
+                    local.priceMax === v ? "bg-neutral-900 text-white border-neutral-900" : "bg-white text-neutral-600 border-neutral-300 hover:border-neutral-400"
+                  }`}>
+                  &le; &euro;{v}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Category */}
+          <div>
+            <h4 className="text-sm font-semibold text-neutral-900 mb-3">Tipologia</h4>
+            <div className="flex flex-wrap gap-2">
+              {CATEGORIES.map(c => (
+                <button key={c.value} onClick={() => setLocal(p => ({ ...p, category: c.value }))}
+                  className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors cursor-pointer ${
+                    local.category === c.value ? "bg-neutral-900 text-white border-neutral-900" : "bg-white text-neutral-700 border-neutral-300 hover:border-neutral-400"
+                  }`}>
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Bedrooms & Guests */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h4 className="text-sm font-semibold text-neutral-900 mb-3">Camere min.</h4>
+              <div className="flex items-center gap-2">
+                {[0, 1, 2, 3, 4].map(n => (
+                  <button key={n} onClick={() => setLocal(p => ({ ...p, bedroomsMin: n }))}
+                    className={`w-10 h-10 rounded-full text-sm font-medium border transition-colors cursor-pointer ${
+                      local.bedroomsMin === n ? "bg-neutral-900 text-white border-neutral-900" : "bg-white text-neutral-700 border-neutral-300 hover:border-neutral-400"
+                    }`}>
+                    {n === 0 ? "–" : n + "+"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-neutral-900 mb-3">Ospiti min.</h4>
+              <div className="flex items-center gap-2">
+                {[0, 2, 4, 6, 8].map(n => (
+                  <button key={n} onClick={() => setLocal(p => ({ ...p, guestsMin: n }))}
+                    className={`w-10 h-10 rounded-full text-sm font-medium border transition-colors cursor-pointer ${
+                      local.guestsMin === n ? "bg-neutral-900 text-white border-neutral-900" : "bg-white text-neutral-700 border-neutral-300 hover:border-neutral-400"
+                    }`}>
+                    {n === 0 ? "–" : n + "+"}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Amenities */}
+          <div>
+            <h4 className="text-sm font-semibold text-neutral-900 mb-3">Servizi</h4>
+            <div className="grid grid-cols-2 gap-2">
+              {FILTER_AMENITIES.map(a => (
+                <button key={a.value} onClick={() => toggleAmenity(a.value)}
+                  className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium border transition-colors cursor-pointer ${
+                    local.amenities.includes(a.value) ? "bg-neutral-900 text-white border-neutral-900" : "bg-white text-neutral-700 border-neutral-300 hover:border-neutral-400"
+                  }`}>
+                  {a.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="sticky bottom-0 bg-white border-t border-neutral-200 px-5 py-4 flex items-center justify-between">
+          <button onClick={handleReset} className="text-sm font-medium text-neutral-700 underline cursor-pointer">
+            Cancella tutto
+          </button>
+          <button onClick={handleApply}
+            className="px-6 py-3 bg-neutral-900 text-white rounded-lg text-sm font-semibold hover:bg-neutral-800 transition-colors cursor-pointer">
+            Mostra {resultCount} alloggi
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /* ═══════════════ Map sub-components ═══════════════ */
@@ -233,7 +431,7 @@ function PropertyMarkers({ properties }: { properties: MapProperty[] }) {
         });
 
         el.addEventListener("click", () => {
-          window.location.href = `/dashboard/property/${prop.id}`;
+          window.location.href = `/property/${prop.id}`;
         });
 
         markersRef.current.push(marker);
@@ -304,9 +502,13 @@ function BoundsWatcher({ onBoundsChange }: { onBoundsChange: (b: Bounds) => void
 
 /* ═══════════════ Property card for list ═══════════════ */
 
-function PropertyCard({ property }: { property: MapProperty }) {
+function PropertyCard({ property, isFav, onToggleFav }: {
+  property: MapProperty;
+  isFav: boolean;
+  onToggleFav: (id: string) => void;
+}) {
   return (
-    <Link href={`/dashboard/property/${property.id}`} className="group block">
+    <Link href={`/property/${property.id}`} className="group block">
       {/* Photo */}
       <div className="aspect-[4/3] rounded-xl overflow-hidden bg-neutral-100 mb-2.5 relative">
         {property.photos[0] ? (
@@ -321,10 +523,11 @@ function PropertyCard({ property }: { property: MapProperty }) {
         )}
         {/* Favorite heart */}
         <button
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-          className="absolute top-2.5 right-2.5 w-8 h-8 flex items-center justify-center cursor-pointer"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFav(property.id); }}
+          className="absolute top-2.5 right-2.5 w-8 h-8 flex items-center justify-center cursor-pointer active:scale-90 transition-transform"
         >
-          <svg className="w-6 h-6 text-white drop-shadow-md" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+          <svg className={`w-6 h-6 drop-shadow-md transition-colors ${isFav ? "text-red-500 fill-red-500" : "text-white"}`}
+            fill={isFav ? "currentColor" : "none"} viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
           </svg>
         </button>
@@ -381,6 +584,11 @@ export function ExploreMap() {
   const [checkOut, setCheckOut] = useState<Date | null>(null);
   const [guests, setGuests] = useState<GuestsCount>({ adults: 0, children: 0, infants: 0, pets: 0 });
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Wishlist
+  const [wishlist, setWishlist] = useState<Set<string>>(new Set());
 
   // All properties loaded once
   const [allProperties, setAllProperties] = useState<MapProperty[]>([]);
@@ -388,26 +596,77 @@ export function ExploreMap() {
   // Current map bounds
   const [bounds, setBounds] = useState<Bounds | null>(null);
 
-  // Load all properties once
+  // Load all properties + wishlist once
   useEffect(() => {
     async function load() {
       const supabase = createClient();
       const { data } = await supabase
         .from("properties")
-        .select("id, title, price, lat, lng, photos, category, address, bedrooms, beds, bathrooms")
+        .select("id, title, price, lat, lng, photos, category, address, bedrooms, beds, bathrooms, guests, amenities")
         .eq("status", "active");
       if (data) setAllProperties(data);
+
+      // Load user wishlist
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: favs } = await supabase
+          .from("wishlists")
+          .select("property_id")
+          .eq("user_id", user.id);
+        if (favs) setWishlist(new Set(favs.map(f => f.property_id)));
+      }
+
       setLoadingProps(false);
     }
     load();
   }, []);
 
-  // Filter properties within current bounds
-  const visibleProperties = bounds
-    ? allProperties.filter(
-        (p) => p.lat >= bounds.south && p.lat <= bounds.north && p.lng >= bounds.west && p.lng <= bounds.east
-      )
-    : allProperties;
+  const toggleWishlist = useCallback(async (propertyId: string) => {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      window.location.href = "/login";
+      return;
+    }
+
+    const isFav = wishlist.has(propertyId);
+    if (isFav) {
+      await supabase.from("wishlists").delete()
+        .eq("user_id", user.id).eq("property_id", propertyId);
+      setWishlist(prev => { const next = new Set(prev); next.delete(propertyId); return next; });
+    } else {
+      await supabase.from("wishlists").insert({ user_id: user.id, property_id: propertyId });
+      setWishlist(prev => new Set(prev).add(propertyId));
+    }
+  }, [wishlist]);
+
+  // Filter properties within current bounds + user filters
+  const visibleProperties = (() => {
+    let result = bounds
+      ? allProperties.filter(
+          (p) => p.lat >= bounds.south && p.lat <= bounds.north && p.lng >= bounds.west && p.lng <= bounds.east
+        )
+      : allProperties;
+
+    // Apply price filter
+    if (filters.priceMin > 0) result = result.filter(p => p.price >= filters.priceMin);
+    if (filters.priceMax < 10000) result = result.filter(p => p.price <= filters.priceMax);
+    // Category
+    if (filters.category) result = result.filter(p => p.category?.toLowerCase() === filters.category);
+    // Bedrooms
+    if (filters.bedroomsMin > 0) result = result.filter(p => p.bedrooms >= filters.bedroomsMin);
+    // Guests
+    if (filters.guestsMin > 0) result = result.filter(p => (p.guests || 0) >= filters.guestsMin);
+    // Amenities
+    if (filters.amenities.length > 0) {
+      result = result.filter(p => {
+        const propAmenities = (p.amenities || []).map(a => a.toLowerCase());
+        return filters.amenities.every(a => propAmenities.some(pa => pa.includes(a)));
+      });
+    }
+
+    return result;
+  })();
 
   const handlePlaceSelect = useCallback(
     (location: { lat: number; lng: number; name: string }) => {
@@ -445,9 +704,26 @@ export function ExploreMap() {
         {/* Search controls */}
         <div className="flex flex-col lg:flex-row lg:items-start gap-2 lg:gap-3 mb-3 lg:mb-4">
           <CitySearch onPlaceSelect={handlePlaceSelect} />
-          <div className="grid grid-cols-2 lg:flex gap-2 lg:gap-3">
+          <div className="grid grid-cols-3 lg:flex gap-2 lg:gap-3">
             <DatePicker checkIn={checkIn} checkOut={checkOut} onDatesChange={handleDatesChange} />
             <GuestsPicker guests={guests} onGuestsChange={setGuests} />
+            <button
+              onClick={() => setShowFilters(true)}
+              className="relative flex items-center justify-center gap-2 h-11 px-4 bg-white border border-neutral-300 rounded-xl text-sm font-medium text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50 transition-colors cursor-pointer"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+              </svg>
+              <span className="hidden sm:inline">Filtri</span>
+              {(() => {
+                const count = (filters.priceMin > 0 ? 1 : 0) + (filters.priceMax < 10000 ? 1 : 0) + (filters.category ? 1 : 0) + (filters.bedroomsMin > 0 ? 1 : 0) + (filters.guestsMin > 0 ? 1 : 0) + filters.amenities.length;
+                return count > 0 ? (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 bg-neutral-900 text-white text-[11px] font-bold rounded-full flex items-center justify-center px-1">
+                    {count}
+                  </span>
+                ) : null;
+              })()}
+            </button>
           </div>
         </div>
 
@@ -478,7 +754,7 @@ export function ExploreMap() {
             ) : visibleProperties.length > 0 ? (
               <div className="grid grid-cols-2 gap-x-5 gap-y-8">
                 {visibleProperties.map((prop) => (
-                  <PropertyCard key={prop.id} property={prop} />
+                  <PropertyCard key={prop.id} property={prop} isFav={wishlist.has(prop.id)} onToggleFav={toggleWishlist} />
                 ))}
               </div>
             ) : bounds ? (
@@ -516,6 +792,16 @@ export function ExploreMap() {
           </div>
         </div>
       </div>
+
+      {/* Filters modal */}
+      {showFilters && (
+        <FiltersPanel
+          filters={filters}
+          onChange={setFilters}
+          onClose={() => setShowFilters(false)}
+          resultCount={visibleProperties.length}
+        />
+      )}
     </APIProvider>
   );
 }

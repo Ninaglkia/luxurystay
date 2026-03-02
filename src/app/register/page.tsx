@@ -76,7 +76,7 @@ export default function RegisterPage() {
             Abbiamo inviato un link di conferma a <strong className="text-neutral-900">{email}</strong>. Clicca sul link per attivare il tuo account.
           </p>
           <Link
-            href="/"
+            href="/login"
             className="text-sm text-neutral-900 font-medium hover:underline"
           >
             Torna al login
@@ -219,7 +219,7 @@ export default function RegisterPage() {
 
           <p className="mt-8 text-center text-sm text-neutral-500">
             Hai già un account?{" "}
-            <Link href="/" className="text-neutral-900 font-medium hover:underline">
+            <Link href="/login" className="text-neutral-900 font-medium hover:underline">
               Accedi
             </Link>
           </p>
