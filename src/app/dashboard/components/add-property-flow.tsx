@@ -975,6 +975,7 @@ export function AddPropertyFlow() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [cancellationPolicy, setCancellationPolicy] = useState<string>("flessibile");
 
   function toggleAmenity(id: string) {
     setAmenities((prev) => prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]);
@@ -1058,6 +1059,7 @@ export function AddPropertyFlow() {
         title,
         description,
         price: parseInt(price),
+        cancellation_policy: cancellationPolicy,
       });
 
       if (insertError) throw new Error(insertError.message);
@@ -1131,14 +1133,37 @@ export function AddPropertyFlow() {
             {step === 12 && <StepDescription value={description} onChange={setDescription} />}
 
             {step === 13 && (
-              <PhaseIntro phase="Ultimo" title="Completa e pubblica"
-                desc="Infine, scegli il tuo prezzo di partenza e pubblica il tuo annuncio.">
-                <div className="w-64 h-64 lg:w-80 lg:h-80 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-50 flex items-center justify-center">
-                  <svg className="w-24 h-24 text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={0.8} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                  </svg>
+              <div className="max-w-xl mx-auto w-full">
+                <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
+                  className="text-3xl font-bold text-neutral-900 mb-3">Politica di cancellazione</motion.h2>
+                <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
+                  className="text-neutral-500 mb-8">Scegli la politica di cancellazione per questa proprietà.</motion.p>
+                <div className="space-y-3">
+                  {[
+                    { id: "flessibile", title: "Flessibile", desc: "Cancellazione gratuita fino a 24 ore prima del check-in. Rimborso del 50% nelle ultime 24 ore." },
+                    { id: "moderata", title: "Moderata", desc: "Cancellazione gratuita fino a 5 giorni prima. Rimborso del 50% tra 5 giorni e 24 ore prima." },
+                    { id: "rigida", title: "Rigida", desc: "Rimborso del 50% solo fino a 7 giorni prima del check-in. Nessun rimborso dopo." },
+                  ].map((policy) => (
+                    <motion.button key={policy.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                      onClick={() => setCancellationPolicy(policy.id)}
+                      className={`w-full text-left p-5 rounded-xl border-2 transition-all cursor-pointer ${
+                        cancellationPolicy === policy.id
+                          ? "border-neutral-900 bg-neutral-50"
+                          : "border-neutral-200 hover:border-neutral-300"
+                      }`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-semibold text-neutral-900">{policy.title}</span>
+                        {cancellationPolicy === policy.id && (
+                          <svg className="w-5 h-5 text-neutral-900" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                          </svg>
+                        )}
+                      </div>
+                      <p className="text-sm text-neutral-500">{policy.desc}</p>
+                    </motion.button>
+                  ))}
                 </div>
-              </PhaseIntro>
+              </div>
             )}
 
             {step === 14 && <StepPrice value={price} onChange={setPrice} />}

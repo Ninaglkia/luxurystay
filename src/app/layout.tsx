@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "LuxuryStay — Prenota case di lusso",
   description: "Scopri e prenota le migliori strutture luxury nel mondo.",
+  verification: {
+    google: "9KYXzhgBBuIhwV0up8bY0Hbbhuf7vivimR2SAuvc4U8",
+  },
 };
 
 export default function RootLayout({

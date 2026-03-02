@@ -28,6 +28,8 @@ interface Booking {
   guests: number;
   total_price: number;
   status: string;
+  payment_status: string;
+  payment_type: string;
   guest_name: string | null;
   guest_email: string | null;
   guest_phone: string | null;
@@ -117,12 +119,12 @@ export function HostDashboard() {
 
     setBookings(enrichedBookings);
 
-    // Compute stats
+    // Compute stats (count authorized + confirmed + captured as active)
     const total = rawBookings.length;
-    const pending = rawBookings.filter((b) => b.status === "pending").length;
-    const confirmed = rawBookings.filter((b) => b.status === "confirmed").length;
+    const pending = rawBookings.filter((b) => ["pending", "pending_payment"].includes(b.status)).length;
+    const confirmed = rawBookings.filter((b) => ["authorized", "confirmed", "captured"].includes(b.status)).length;
     const earnings = rawBookings
-      .filter((b) => b.status === "confirmed")
+      .filter((b) => ["confirmed", "captured", "completed"].includes(b.status))
       .reduce((sum, b) => sum + (Number(b.total_price) || 0), 0);
 
     setStats({ total, pending, confirmed, earnings });
@@ -181,13 +183,45 @@ export function HostDashboard() {
     switch (status) {
       case "confirmed":
         return <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Confermata</span>;
+      case "authorized":
+        return <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">Autorizzata</span>;
+      case "captured":
+        return <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Catturata</span>;
       case "pending":
+      case "pending_payment":
         return <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-700">In attesa</span>;
       case "cancelled":
         return <span className="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-700">Annullata</span>;
+      case "completed":
+        return <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Completata</span>;
+      case "expired":
+        return <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-500">Scaduta</span>;
+      case "refunded":
+        return <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">Rimborsata</span>;
       default:
         return <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-500">{status}</span>;
     }
+  }
+
+  function getPaymentBadge(paymentStatus: string, paymentType: string) {
+    if (!paymentStatus) return null;
+    const label = paymentStatus === "paid"
+      ? "Pagato"
+      : paymentStatus === "partial"
+        ? "Acconto"
+        : paymentStatus === "unpaid"
+          ? "Non pagato"
+          : paymentStatus;
+    const color = paymentStatus === "paid"
+      ? "bg-green-50 text-green-700"
+      : paymentStatus === "partial"
+        ? "bg-blue-50 text-blue-700"
+        : "bg-orange-50 text-orange-700";
+    return (
+      <span className={`text-xs px-2 py-0.5 rounded-full ${color}`}>
+        {label}{paymentType === "split" ? " (2 rate)" : ""}
+      </span>
+    );
   }
 
   function getPropertyStatusBadge(status: string) {
@@ -366,6 +400,7 @@ export function HostDashboard() {
                         {booking.property_title}
                       </p>
                       {getStatusBadge(booking.status)}
+                      {getPaymentBadge(booking.payment_status, booking.payment_type)}
                     </div>
                     <p className="text-sm text-neutral-600">
                       <span className="font-medium text-neutral-700">{getGuestDisplayName(booking)}</span>

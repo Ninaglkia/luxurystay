@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import StripeProvider from "@/app/components/stripe-provider";
+import PaymentForm from "@/app/components/payment-form";
 import type { User } from "@supabase/supabase-js";
 
 interface Property {
@@ -16,6 +18,7 @@ interface Property {
   guests: number;
   photos: string[];
   user_id: string;
+  cancellation_policy: string;
 }
 
 interface HostProfile {
@@ -54,6 +57,14 @@ export default function BookingPage() {
   const [messageToHost, setMessageToHost] = useState("");
   const [addInsurance, setAddInsurance] = useState(false);
 
+  // Payment Intent state
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [bookingId, setBookingId] = useState<string | null>(null);
+  const [paymentType, setPaymentType] = useState<"full" | "split">("full");
+  const [depositAmount, setDepositAmount] = useState<number | undefined>();
+  const [balanceAmount, setBalanceAmount] = useState<number | undefined>();
+  const [totalCents, setTotalCents] = useState(0);
+
   // Guest form fields (for non-authenticated users)
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
@@ -70,7 +81,7 @@ export default function BookingPage() {
     async function load() {
       const { data } = await supabase
         .from("properties")
-        .select("id, title, address, price, category, space_type, guests, photos, user_id")
+        .select("id, title, address, price, category, space_type, guests, photos, user_id, cancellation_policy")
         .eq("id", id)
         .single();
       if (data) {
@@ -125,61 +136,59 @@ export default function BookingPage() {
     setSubmitting(true);
     setError("");
 
-    if (user) {
-      // Authenticated user flow
-      if (user.id === property.user_id) {
-        setError("Non puoi prenotare il tuo stesso alloggio.");
-        setSubmitting(false);
-        return;
-      }
-
-      const { error: insertError } = await supabase.from("bookings").insert({
-        property_id: property.id,
-        guest_id: user.id,
-        host_id: property.user_id,
-        check_in: checkIn,
-        check_out: checkOut,
-        guests: guestCount,
-        total_price: total,
-        status: "pending",
-      });
-
-      if (insertError) {
-        setError("Errore durante la prenotazione. Riprova.");
-        setSubmitting(false);
-        return;
-      }
-    } else {
-      // Guest (non-authenticated) flow
+    // Validate guest fields for non-authenticated users
+    if (!user) {
       if (!guestName.trim() || !guestEmail.trim() || !guestPhone.trim()) {
         setError("Compila tutti i campi obbligatori.");
         setSubmitting(false);
         return;
       }
+    }
 
-      const { error: insertError } = await supabase.from("bookings").insert({
-        property_id: property.id,
-        guest_id: null,
-        host_id: property.user_id,
-        check_in: checkIn,
-        check_out: checkOut,
-        guests: guestCount,
-        total_price: total,
-        status: "pending",
-        guest_name: guestName.trim(),
-        guest_email: guestEmail.trim(),
-        guest_phone: guestPhone.trim(),
+    // Prevent self-booking
+    if (user && user.id === property.user_id) {
+      setError("Non puoi prenotare il tuo stesso alloggio.");
+      setSubmitting(false);
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/create-payment-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          property_id: property.id,
+          check_in: checkIn,
+          check_out: checkOut,
+          guests: guestCount,
+          total_price: total,
+          property_title: property.title,
+          guest_name: !user ? guestName.trim() : undefined,
+          guest_email: !user ? guestEmail.trim() : undefined,
+          guest_phone: !user ? guestPhone.trim() : undefined,
+        }),
       });
 
-      if (insertError) {
-        setError("Errore durante la prenotazione. Riprova.");
+      const data = await res.json();
+
+      if (!res.ok || !data.clientSecret) {
+        setError(data.error || "Errore durante la creazione del pagamento.");
         setSubmitting(false);
         return;
       }
-    }
 
-    setSuccess(true);
-    setSubmitting(false);
+      // Show inline payment form
+      setClientSecret(data.clientSecret);
+      setBookingId(data.bookingId);
+      setPaymentType(data.paymentType);
+      setDepositAmount(data.depositAmount);
+      setBalanceAmount(data.balanceAmount);
+      setTotalCents(data.totalCents);
+      setSubmitting(false);
+    } catch {
+      setError("Errore di connessione. Riprova.");
+      setSubmitting(false);
+    }
   }
 
   if (loading || authLoading) {
@@ -375,13 +384,25 @@ export default function BookingPage() {
             </div>
           </div>
 
-          {/* Cancellation policy */}
+          {/* Cancellation policy (dynamic from property) */}
           <div className="py-8 border-b border-neutral-200">
             <h2 className="text-lg font-semibold text-neutral-900 mb-3">Politica di cancellazione</h2>
             <p className="text-[15px] text-neutral-600 leading-relaxed">
-              <strong className="text-neutral-900">Cancellazione gratuita entro 48 ore dalla prenotazione.</strong>{" "}
-              Dopo questo termine, se cancelli prima del check-in, riceverai un rimborso parziale.{" "}
-              <span className="underline cursor-pointer text-neutral-900 font-medium">Scopri di più</span>
+              {property.cancellation_policy === "flessibile" && (
+                <>
+                  <strong className="text-neutral-900">Flessibile</strong> — Cancellazione gratuita fino a 24 ore prima del check-in. Rimborso del 50% nelle ultime 24 ore.
+                </>
+              )}
+              {property.cancellation_policy === "moderata" && (
+                <>
+                  <strong className="text-neutral-900">Moderata</strong> — Cancellazione gratuita fino a 5 giorni prima del check-in. Rimborso del 50% tra 5 giorni e 24 ore prima.
+                </>
+              )}
+              {property.cancellation_policy === "rigida" && (
+                <>
+                  <strong className="text-neutral-900">Rigida</strong> — Rimborso del 50% solo fino a 7 giorni prima del check-in. Nessun rimborso dopo.
+                </>
+              )}
             </p>
           </div>
 
@@ -403,42 +424,56 @@ export default function BookingPage() {
             </ul>
           </div>
 
-          {/* Disclaimer + Confirm button */}
+          {/* Payment section */}
           <div className="py-8">
-            <p className="text-xs text-neutral-500 leading-relaxed mb-6">
-              Cliccando il pulsante qui sotto, accetto le{" "}
-              <span className="underline cursor-pointer text-neutral-700">Regole della casa dell&apos;host</span>,{" "}
-              <span className="underline cursor-pointer text-neutral-700">le Regole di base per gli ospiti di LuxuryStay</span>{" "}
-              e la{" "}
-              <span className="underline cursor-pointer text-neutral-700">Politica di rimborso</span>.
-              Accetto inoltre di pagare l&apos;importo totale indicato.
-            </p>
+            {clientSecret && bookingId ? (
+              /* Inline Stripe Payment Form */
+              <StripeProvider clientSecret={clientSecret}>
+                <PaymentForm
+                  bookingId={bookingId}
+                  paymentType={paymentType}
+                  totalCents={totalCents}
+                  depositAmount={depositAmount}
+                  balanceAmount={balanceAmount}
+                  cancellationPolicy={property.cancellation_policy}
+                  onSuccess={() => setSuccess(true)}
+                />
+              </StripeProvider>
+            ) : (
+              /* Disclaimer + Confirm button */
+              <>
+                <p className="text-xs text-neutral-500 leading-relaxed mb-6">
+                  Cliccando il pulsante qui sotto, accetto le{" "}
+                  <span className="underline cursor-pointer text-neutral-700">Regole della casa dell&apos;host</span>,{" "}
+                  <span className="underline cursor-pointer text-neutral-700">le Regole di base per gli ospiti di LuxuryStay</span>{" "}
+                  e la{" "}
+                  <span className="underline cursor-pointer text-neutral-700">Politica di rimborso</span>.
+                  Accetto inoltre di pagare l&apos;importo totale indicato.
+                </p>
 
-            {error && (
-              <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                <p className="text-sm text-red-700">{error}</p>
-              </div>
+                {error && (
+                  <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                    <p className="text-sm text-red-700">{error}</p>
+                  </div>
+                )}
+
+                <button onClick={handleConfirm} disabled={submitting}
+                  className={`w-full lg:w-auto px-10 py-4 rounded-xl text-base font-semibold transition-all ${
+                    submitting
+                      ? "bg-neutral-300 text-neutral-500 cursor-not-allowed"
+                      : "bg-gradient-to-r from-[#E61E4D] to-[#D70466] text-white hover:from-[#d41c47] hover:to-[#c2035c] cursor-pointer active:scale-[0.98]"
+                  }`}>
+                  {submitting ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Preparazione pagamento...
+                    </span>
+                  ) : (
+                    "Conferma e paga"
+                  )}
+                </button>
+              </>
             )}
-
-            <button onClick={handleConfirm} disabled={submitting}
-              className={`w-full lg:w-auto px-10 py-4 rounded-xl text-base font-semibold transition-all ${
-                submitting
-                  ? "bg-neutral-300 text-neutral-500 cursor-not-allowed"
-                  : "bg-gradient-to-r from-[#E61E4D] to-[#D70466] text-white hover:from-[#d41c47] hover:to-[#c2035c] cursor-pointer active:scale-[0.98]"
-              }`}>
-              {submitting ? (
-                <span className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Invio in corso...
-                </span>
-              ) : (
-                "Invia richiesta di prenotazione"
-              )}
-            </button>
-
-            <p className="text-xs text-neutral-400 mt-3">
-              Ottieni un rimborso fino al 100% del costo del tuo soggiorno se effettui la cancellazione entro 48 ore dalla prenotazione.
-            </p>
           </div>
         </div>
 
