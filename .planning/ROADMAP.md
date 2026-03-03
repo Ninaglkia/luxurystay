@@ -47,7 +47,11 @@ Plans:
   2. A user sending a prompt-injection attempt (e.g., "ignore previous instructions") receives a normal refusal, not a compromised response
   3. An anonymous user asking for booking details, payment amounts, or personal user data receives no such data in the response
   4. The `max_tokens` ceiling is enforced on every AI call, preventing unbounded token consumption
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Install @upstash/ratelimit, migrate middleware.ts to proxy.ts with rate limiting (15/min anon, 30/min auth)
+- [ ] 02-02-PLAN.md — Add prompt injection detection and differentiated system prompt by auth tier in route.ts
 
 ### Phase 3: Access Control
 **Goal**: The server reliably distinguishes anonymous from authenticated users, and the middleware permits the correct routes without breaking existing auth
@@ -138,7 +142,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. AI API Foundation | 1/1 | Complete   | 2026-03-03 |
-| 2. Security Hardening | 0/TBD | Not started | - |
+| 2. Security Hardening | 0/2 | Not started | - |
 | 3. Access Control | 0/TBD | Not started | - |
 | 4. Property FAQ Integration | 0/TBD | Not started | - |
 | 5. Booking Support | 0/TBD | Not started | - |
