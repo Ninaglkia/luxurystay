@@ -7,10 +7,10 @@
 
 ### Security & Infrastructure
 
-- [ ] **SEC-01**: API key AI mai esposta lato client — tutte le chiamate AI passano per server-side API route
+- [x] **SEC-01**: API key AI mai esposta lato client — tutte le chiamate AI passano per server-side API route
 - [ ] **SEC-02**: Rate limiting per utenti anonimi per prevenire abuso e costi esplosivi
 - [ ] **SEC-03**: Protezione anti prompt-injection nel system prompt (no dati sensibili nel prompt, input sanitization)
-- [ ] **SEC-04**: Edge runtime con streaming per rispettare timeout Vercel e garantire risposte fluide
+- [x] **SEC-04**: Edge runtime con streaming per rispettare timeout Vercel e garantire risposte fluide
 - [ ] **SEC-05**: Utenti anonimi non possono accedere a dati di booking, pagamenti o info personali
 
 ### AI Chat — Property FAQ
@@ -92,8 +92,8 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEC-01 | Phase 1 | Pending |
-| SEC-04 | Phase 1 | Pending |
+| SEC-01 | Phase 1 | Complete |
+| SEC-04 | Phase 1 | Complete |
 | SEC-02 | Phase 2 | Pending |
 | SEC-03 | Phase 2 | Pending |
 | SEC-05 | Phase 2 | Pending |

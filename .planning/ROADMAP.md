@@ -12,7 +12,7 @@ This roadmap adds a full AI concierge chatbot to an existing LuxuryStay platform
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: AI API Foundation** - Secure streaming `/api/chat` Route Handler with Anthropic provider, no UI
+- [x] **Phase 1: AI API Foundation** - Secure streaming `/api/chat` Route Handler with Anthropic provider, no UI (completed 2026-03-03)
 - [ ] **Phase 2: Security Hardening** - Rate limiting, prompt injection protection, and anonymous data boundary
 - [ ] **Phase 3: Access Control** - Server-side auth tier detection and middleware route permissions
 - [ ] **Phase 4: Property FAQ Integration** - Supabase property context injected into system prompt for grounded FAQ answers
@@ -36,7 +36,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 1 plan
 
 Plans:
-- [ ] 01-01-PLAN.md — Install AI SDK packages and create streaming /api/chat Route Handler
+- [~] 01-01-PLAN.md — Install AI SDK packages and create streaming /api/chat Route Handler (automated tasks done, awaiting human verify checkpoint)
 
 ### Phase 2: Security Hardening
 **Goal**: Anonymous users cannot abuse the endpoint to generate runaway costs, and user input cannot manipulate the system prompt
@@ -137,7 +137,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. AI API Foundation | 0/1 | In progress | - |
+| 1. AI API Foundation | 1/1 | Complete   | 2026-03-03 |
 | 2. Security Hardening | 0/TBD | Not started | - |
 | 3. Access Control | 0/TBD | Not started | - |
 | 4. Property FAQ Integration | 0/TBD | Not started | - |
