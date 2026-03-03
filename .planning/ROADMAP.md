@@ -108,7 +108,10 @@ Plans:
   2. A user asking how to get to the property receives transport options (taxi, public transit, car rental) appropriate to the property's location
   3. A user asking about local activities receives experience suggestions (beaches, excursions, museums) relevant to the property's area
   4. Recommendations include enough specificity (names, general distance) to be immediately useful, not vague category lists
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 06-01-PLAN.md — buildConciergeContext() pure function with TDD + wire into route.ts inside if (property) branch
 
 ### Phase 7: Chat Persona and UX Behaviors
 **Goal**: The chatbot feels like a premium concierge service — a consistent luxury persona, streaming responses, guided conversation, graceful fallback, and session-persistent history
@@ -157,7 +160,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Access Control | 1/1 | Complete | 2026-03-03 |
 | 4. Property FAQ Integration | 2/2 | Complete | 2026-03-03 |
 | 5. Booking Support | 2/2 | Complete | 2026-03-03 |
-| 6. Concierge Recommendations | 0/TBD | Not started | - |
+| 6. Concierge Recommendations | 0/1 | Not started | - |
 | 7. Chat Persona and UX Behaviors | 0/TBD | Not started | - |
 | 8. Chat Bubble Widget | 0/TBD | Not started | - |
 | 9. Dedicated Chat Page | 0/TBD | Not started | - |
