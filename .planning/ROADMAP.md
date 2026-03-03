@@ -77,7 +77,11 @@ Plans:
   3. A user asking about house rules receives the exact rules from the property record
   4. A user asking for directions or location receives address and location info from the property record
   5. When a property field is null or missing, the chatbot says it does not have that information rather than inventing a plausible answer
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — DB migration (checkin_time, checkout_time, house_rules columns) + buildPropertyContext() pure function with TDD
+- [ ] 04-02-PLAN.md — Wire property fetch + context injection into route.ts with full FAQ test coverage
 
 ### Phase 5: Booking Support
 **Goal**: Authenticated users can ask the chatbot about their booking status, payments, and cancellation options and receive accurate, personalized answers
@@ -147,7 +151,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 1. AI API Foundation | 1/1 | Complete   | 2026-03-03 |
 | 2. Security Hardening | 2/2 | Complete | 2026-03-03 |
 | 3. Access Control | 0/1 | Not started | - |
-| 4. Property FAQ Integration | 0/TBD | Not started | - |
+| 4. Property FAQ Integration | 0/2 | Not started | - |
 | 5. Booking Support | 0/TBD | Not started | - |
 | 6. Concierge Recommendations | 0/TBD | Not started | - |
 | 7. Chat Persona and UX Behaviors | 0/TBD | Not started | - |
