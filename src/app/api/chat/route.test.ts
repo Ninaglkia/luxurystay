@@ -6,6 +6,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { getAdminSupabase } from '@/lib/admin-supabase'
 
 // Mock the AI SDK modules before importing the route
 vi.mock('ai', () => ({
@@ -15,6 +16,11 @@ vi.mock('ai', () => ({
 
 vi.mock('@ai-sdk/anthropic', () => ({
   anthropic: vi.fn().mockReturnValue({ type: 'anthropic-model', modelId: 'claude-haiku-4-5' }),
+}))
+
+// Mock admin Supabase client for property FAQ tests
+vi.mock('@/lib/admin-supabase', () => ({
+  getAdminSupabase: vi.fn(),
 }))
 
 describe('POST /api/chat route handler', () => {
@@ -372,6 +378,170 @@ describe('POST /api/chat route handler', () => {
           maxOutputTokens: 500,
         })
       )
+    })
+  })
+
+  describe('property FAQ context injection', () => {
+    const VALID_UUID = '550e8400-e29b-41d4-a716-446655440000'
+    const getAdminSupabaseMock = getAdminSupabase as ReturnType<typeof vi.fn>
+
+    const mockProperty = {
+      title: 'Villa Roma',
+      description: 'A beautiful villa.',
+      address: 'Via Appia 1, Roma',
+      lat: 41.8902,
+      lng: 12.4922,
+      price: 350,
+      category: 'villa',
+      space_type: 'entire_place',
+      guests: 8,
+      bedrooms: 4,
+      beds: 5,
+      bathrooms: 3,
+      amenities: ['wifi', 'piscina'],
+      cancellation_policy: 'flessibile',
+      checkin_time: '15:00',
+      checkout_time: '11:00',
+      house_rules: 'No smoking',
+    }
+
+    function setupSupabaseMock(data: typeof mockProperty | null, error: Error | null = null) {
+      const singleMock = vi.fn().mockResolvedValue({ data, error })
+      const eqMock = vi.fn().mockReturnValue({ single: singleMock })
+      const selectMock = vi.fn().mockReturnValue({ eq: eqMock })
+      const fromMock = vi.fn().mockReturnValue({ select: selectMock })
+      getAdminSupabaseMock.mockReturnValue({ from: fromMock })
+      return { fromMock, selectMock, eqMock, singleMock }
+    }
+
+    function makeFaqRequest(propertyId?: string, headers?: Record<string, string>) {
+      return new Request('http://localhost:3000/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...headers,
+        },
+        body: JSON.stringify({
+          messages: [
+            { id: '1', role: 'user', parts: [{ type: 'text', text: 'What are the amenities?' }] },
+          ],
+          ...(propertyId !== undefined ? { propertyId } : {}),
+        }),
+      })
+    }
+
+    beforeEach(() => {
+      setupSupabaseMock(mockProperty)
+    })
+
+    it('fetches property and injects PROPERTY CONTEXT when valid propertyId UUID provided', async () => {
+      const request = makeFaqRequest(VALID_UUID)
+      await POST(request)
+
+      const systemArg = streamTextMock.mock.calls[0][0].system as string
+      expect(systemArg).toContain('PROPERTY CONTEXT')
+    })
+
+    it('maps amenity IDs to labels in system prompt (wifi->Wi-Fi, piscina->Piscina privata)', async () => {
+      const request = makeFaqRequest(VALID_UUID)
+      await POST(request)
+
+      const systemArg = streamTextMock.mock.calls[0][0].system as string
+      expect(systemArg).toContain('Wi-Fi')
+      expect(systemArg).toContain('Piscina privata')
+    })
+
+    it('includes check-in time in system prompt when property has checkin_time', async () => {
+      const request = makeFaqRequest(VALID_UUID)
+      await POST(request)
+
+      const systemArg = streamTextMock.mock.calls[0][0].system as string
+      expect(systemArg).toContain('Check-in time: 15:00')
+    })
+
+    it('includes house rules in system prompt when property has house_rules', async () => {
+      const request = makeFaqRequest(VALID_UUID)
+      await POST(request)
+
+      const systemArg = streamTextMock.mock.calls[0][0].system as string
+      expect(systemArg).toContain('House rules: No smoking')
+    })
+
+    it('includes address in system prompt when property has address', async () => {
+      const request = makeFaqRequest(VALID_UUID)
+      await POST(request)
+
+      const systemArg = streamTextMock.mock.calls[0][0].system as string
+      expect(systemArg).toContain('Via Appia 1, Roma')
+    })
+
+    it('gracefully degrades when property fetch returns null (not found)', async () => {
+      setupSupabaseMock(null)
+
+      const request = makeFaqRequest(VALID_UUID)
+      const response = await POST(request)
+
+      expect(response.status).toBe(200)
+      expect(streamTextMock).toHaveBeenCalled()
+      const systemArg = streamTextMock.mock.calls[0][0].system as string
+      expect(systemArg).not.toContain('PROPERTY CONTEXT')
+    })
+
+    it('gracefully degrades when getAdminSupabase throws error (200 response)', async () => {
+      getAdminSupabaseMock.mockImplementation(() => {
+        throw new Error('Supabase connection failed')
+      })
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      const request = makeFaqRequest(VALID_UUID)
+      const response = await POST(request)
+
+      expect(response.status).toBe(200)
+      expect(streamTextMock).toHaveBeenCalled()
+      errorSpy.mockRestore()
+    })
+
+    it('does NOT call getAdminSupabase for invalid propertyId (not a UUID)', async () => {
+      const request = makeFaqRequest('../../etc/passwd')
+      await POST(request)
+
+      expect(getAdminSupabaseMock).not.toHaveBeenCalled()
+      expect(streamTextMock).toHaveBeenCalled()
+      const systemArg = streamTextMock.mock.calls[0][0].system as string
+      expect(systemArg).not.toContain('PROPERTY CONTEXT')
+    })
+
+    it('does NOT call getAdminSupabase when propertyId field is absent', async () => {
+      const request = makeFaqRequest(undefined)
+      await POST(request)
+
+      expect(getAdminSupabaseMock).not.toHaveBeenCalled()
+      expect(streamTextMock).toHaveBeenCalled()
+    })
+
+    it('system prompt with propertyId contains "NEVER invent" instruction (FAQ-05)', async () => {
+      const request = makeFaqRequest(VALID_UUID)
+      await POST(request)
+
+      const systemArg = streamTextMock.mock.calls[0][0].system as string
+      expect(systemArg).toContain('NEVER invent')
+    })
+
+    it('all pre-existing tests still pass (regression check)', async () => {
+      // A normal request without propertyId should work exactly as before
+      const request = new Request('http://localhost:3000/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            { id: '1', role: 'user', parts: [{ type: 'text', text: 'Hello' }] },
+          ],
+        }),
+      })
+
+      const response = await POST(request)
+      expect(response.status).toBe(200)
+      expect(streamTextMock).toHaveBeenCalled()
     })
   })
 })
