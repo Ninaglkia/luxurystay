@@ -170,4 +170,51 @@ describe('proxy.ts', () => {
 
     nextSpy.mockRestore()
   })
+
+  // Access control regression tests (AUTH-01 through AUTH-04)
+  // AUTH-02 is already covered by the "forwards x-user-id header" test above
+  describe('access control (AUTH-01 through AUTH-04)', () => {
+    // AUTH-01: Anonymous request to /api/chat — x-user-id must NOT be present in forwarded headers
+    it('anonymous user to /api/chat — x-user-id absent in forwarded headers (AUTH-01)', async () => {
+      mockGetUser.mockResolvedValue({ data: { user: null } })
+      const request = new NextRequest('http://localhost:3000/api/chat', { method: 'POST' })
+      const nextSpy = vi.spyOn(NextResponse, 'next')
+      await proxy(request)
+      for (const call of nextSpy.mock.calls) {
+        const requestArg = call[0] as { request?: { headers?: Headers } } | undefined
+        const xUserId = requestArg?.request?.headers?.get('x-user-id')
+        expect(xUserId).toBeNull()
+      }
+      nextSpy.mockRestore()
+    })
+
+    // AUTH-03: Forged x-user-id header from anonymous client must be stripped
+    it('forged x-user-id from anonymous client is stripped before reaching route (AUTH-03)', async () => {
+      mockGetUser.mockResolvedValue({ data: { user: null } })
+      const request = new NextRequest('http://localhost:3000/api/chat', {
+        method: 'POST',
+        headers: { 'x-user-id': 'forged-user-id-12345' },
+      })
+      const nextSpy = vi.spyOn(NextResponse, 'next')
+      await proxy(request)
+      for (const call of nextSpy.mock.calls) {
+        const requestArg = call[0] as { request?: { headers?: Headers } } | undefined
+        const xUserId = requestArg?.request?.headers?.get('x-user-id')
+        expect(xUserId).not.toBe('forged-user-id-12345')
+      }
+      nextSpy.mockRestore()
+    })
+
+    // AUTH-04: Anonymous user to /api/chat is NOT redirected to /login
+    it('anonymous user to /api/chat is not redirected to /login (AUTH-04)', async () => {
+      mockGetUser.mockResolvedValue({ data: { user: null } })
+      anonRatelimitMock.limit.mockResolvedValue({ success: true, remaining: 14, reset: Date.now() + 60000 })
+      const request = new NextRequest('http://localhost:3000/api/chat', { method: 'POST' })
+      const response = await proxy(request)
+      expect(response.status).not.toBe(302)
+      expect(response.status).not.toBe(307)
+      const location = response.headers.get('location')
+      expect(location === null || !location.includes('/login')).toBe(true)
+    })
+  })
 })
