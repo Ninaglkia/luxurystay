@@ -33,7 +33,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. The `ANTHROPIC_API_KEY` is never accessible from client code or browser network tab
   3. The response streams progressively (characters arrive over time, not all at once)
   4. The endpoint respects Vercel function timeout limits (streaming configured with correct `maxDuration` and runtime exports)
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 01-01-PLAN.md — Install AI SDK packages and create streaming /api/chat Route Handler
 
 ### Phase 2: Security Hardening
 **Goal**: Anonymous users cannot abuse the endpoint to generate runaway costs, and user input cannot manipulate the system prompt
@@ -134,7 +137,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. AI API Foundation | 0/TBD | Not started | - |
+| 1. AI API Foundation | 0/1 | In progress | - |
 | 2. Security Hardening | 0/TBD | Not started | - |
 | 3. Access Control | 0/TBD | Not started | - |
 | 4. Property FAQ Integration | 0/TBD | Not started | - |
