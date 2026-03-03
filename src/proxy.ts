@@ -9,7 +9,15 @@ import { ipAddress } from "@vercel/functions"
 import { anonRatelimit, authRatelimit } from "@/lib/ratelimit"
 
 export async function proxy(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request })
+  // SECURITY: Strip any client-supplied x-user-id. This header is set exclusively
+  // by this proxy — clients cannot forge the auth tier signal.
+  // Must strip BEFORE supabaseResponse construction so stripped headers propagate everywhere.
+  const strippedHeaders = new Headers(request.headers)
+  strippedHeaders.delete('x-user-id')
+
+  let supabaseResponse = NextResponse.next({
+    request: { headers: strippedHeaders },
+  })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,7 +31,8 @@ export async function proxy(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
-          supabaseResponse = NextResponse.next({ request })
+          // Use strippedHeaders so the stripped state carries into refreshed session responses
+          supabaseResponse = NextResponse.next({ request: { headers: strippedHeaders } })
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )
@@ -62,7 +71,7 @@ export async function proxy(request: NextRequest) {
     // Forward auth tier signal to route handler — set server-side, cannot be forged by client.
     // route.ts (plan 02-02) reads this header to select the correct system prompt tier.
     if (user) {
-      const requestHeaders = new Headers(request.headers)
+      const requestHeaders = new Headers(strippedHeaders)
       requestHeaders.set("x-user-id", user.id)
       supabaseResponse = NextResponse.next({
         request: { headers: requestHeaders },
@@ -71,6 +80,12 @@ export async function proxy(request: NextRequest) {
   }
 
   const pathname = request.nextUrl.pathname
+
+  // Route permission contract (AUTH-04):
+  // /api/chat — open to anonymous users (rate-limited, no redirect guard)
+  // /chat     — open to anonymous users (no redirect guard, ever — see Phase 9)
+  // /dashboard* — requires login (redirect to /login below)
+  // /login, /register — redirect to /dashboard if already logged in
 
   // Preserve existing auth guards — unchanged from middleware.ts
   if (!user && pathname.startsWith("/dashboard")) {
