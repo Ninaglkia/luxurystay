@@ -38,11 +38,11 @@
 
 ### AI Chat — Persona & UX
 
-- [ ] **UX-01**: Il chatbot ha una persona luxury coerente con il brand LuxuryStay
-- [ ] **UX-02**: Il chatbot mostra suggested chips/quick replies per guidare la conversazione
-- [ ] **UX-03**: Il chatbot ha un fallback graceful quando non può rispondere (suggerisce contatto diretto)
-- [ ] **UX-04**: Le risposte sono in streaming (appaiono progressivamente, non tutto insieme)
-- [ ] **UX-05**: La cronologia chat persiste durante la sessione del browser
+- [x] **UX-01**: Il chatbot ha una persona luxury coerente con il brand LuxuryStay
+- [x] **UX-02**: Il chatbot mostra suggested chips/quick replies per guidare la conversazione
+- [x] **UX-03**: Il chatbot ha un fallback graceful quando non può rispondere (suggerisce contatto diretto)
+- [x] **UX-04**: Le risposte sono in streaming (appaiono progressivamente, non tutto insieme)
+- [x] **UX-05**: La cronologia chat persiste durante la sessione del browser
 
 ### UI — Chat Widget
 
@@ -115,11 +115,11 @@
 | CONC-02 | Phase 6 | Complete |
 | CONC-03 | Phase 6 | Complete |
 | CONC-04 | Phase 6 | Complete |
-| UX-01 | Phase 7 | Pending |
-| UX-02 | Phase 7 | Pending |
-| UX-03 | Phase 7 | Pending |
-| UX-04 | Phase 7 | Pending |
-| UX-05 | Phase 7 | Pending |
+| UX-01 | Phase 7 | Complete |
+| UX-02 | Phase 7 | Complete |
+| UX-03 | Phase 7 | Complete |
+| UX-04 | Phase 7 | Complete |
+| UX-05 | Phase 7 | Complete |
 | UI-01 | Phase 8 | Pending |
 | UI-02 | Phase 8 | Pending |
 | UI-03 | Phase 8 | Pending |
