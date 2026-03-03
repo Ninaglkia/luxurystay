@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import type { UIMessage } from 'ai'
 
 interface ChatMessagesProps {
@@ -8,6 +9,12 @@ interface ChatMessagesProps {
 }
 
 export default function ChatMessages({ messages, isStreaming }: ChatMessagesProps) {
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, isStreaming])
+
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
       {messages.map((message) => (
@@ -37,6 +44,8 @@ export default function ChatMessages({ messages, isStreaming }: ChatMessagesProp
           </div>
         </div>
       )}
+      {/* Sentinel — always rendered, always at the bottom of the list */}
+      <div ref={bottomRef} aria-hidden="true" />
     </div>
   )
 }
