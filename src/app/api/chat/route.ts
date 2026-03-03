@@ -7,6 +7,7 @@
 import { streamText, UIMessage, convertToModelMessages } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { buildPropertyContext, PropertyRecord } from './property-context'
+import { buildBookingContext, BookingRecord, PaymentRecord } from './booking-context'
 import { getAdminSupabase } from '@/lib/admin-supabase'
 
 // Required: explicit timeout for Vercel streaming reliability
@@ -147,16 +148,83 @@ export async function POST(req: Request) {
       if (property) {
         propertyContextBlock = '\n\n' + buildPropertyContext(property as PropertyRecord)
       }
+
+      // BOOK-05: Fetch booked date ranges so AI can answer availability questions
+      // This is public info (shown on listing page) — not auth-gated
+      const { data: activeBookings } = await adminClient
+        .from('bookings')
+        .select('check_in, check_out')
+        .eq('property_id', propertyId)
+        .in('status', ['pending_payment', 'confirmed'])
+
+      if (activeBookings && activeBookings.length > 0) {
+        const bookedRanges = activeBookings
+          .map((b: { check_in: string; check_out: string }) => `${b.check_in} to ${b.check_out}`)
+          .join(', ')
+        propertyContextBlock +=
+          '\n\nCurrently booked periods (NOT available): ' + bookedRanges +
+          '\nFor dates NOT in the above list, the property is available.' +
+          '\nWhen asked about specific dates, check them against the booked periods above.'
+      } else {
+        propertyContextBlock +=
+          '\n\nAvailability: No current bookings found — property appears fully available.'
+      }
     } catch (err) {
       // Log but never fail the request — degrade gracefully to base system prompt
       console.error('[PROPERTY] Failed to fetch property context', { propertyId, err })
     }
   }
 
+  // Booking context injection — auth-gated, fetch user's most recent active booking
+  let bookingContextBlock = ''
+
+  if (isAuthenticated && userId) {
+    try {
+      const adminClient = getAdminSupabase()
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: bookings } = await (adminClient
+        .from('bookings')
+        .select(
+          'id, property_id, check_in, check_out, guests, total_price, status, ' +
+          'payment_status, payment_type, deposit_amount, balance_amount, ' +
+          'cancellation_policy, cancelled_at, cancelled_by, created_at'
+        )
+        .eq('guest_id', userId)
+        .not('status', 'in', '(cancelled,expired,completed,refunded)')
+        .order('created_at', { ascending: false })
+        .limit(1) as unknown as Promise<{ data: BookingRecord[] | null }>)
+
+      const booking = bookings?.[0]
+
+      if (booking) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: payments } = await (adminClient
+          .from('payments')
+          .select(
+            'id, type, amount_cents, amount_captured_cents, amount_refunded_cents, status, created_at'
+          )
+          .eq('booking_id', booking.id)
+          .order('created_at', { ascending: true }) as unknown as Promise<{ data: PaymentRecord[] | null }>)
+
+        bookingContextBlock = '\n\n' + buildBookingContext(
+          booking,
+          payments ?? []
+        )
+      } else {
+        bookingContextBlock = '\n\nBOOKING CONTEXT: This user has no active bookings at this time.'
+      }
+    } catch (err) {
+      console.error('[BOOKING] Failed to fetch booking context', { userId, err })
+      // Degrade gracefully — booking context omitted, base prompt still works
+    }
+  }
+
   const systemPrompt =
     SYSTEM_PROMPT_BASE +
     (isAuthenticated ? AUTH_ADDITIONS : ANON_ADDITIONS) +
-    propertyContextBlock
+    propertyContextBlock +
+    bookingContextBlock
 
   const result = streamText({
     model: anthropic('claude-haiku-4-5'),
