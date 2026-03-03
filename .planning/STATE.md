@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-03T12:17:13.291Z"
+last_updated: "2026-03-03T12:31:31Z"
 progress:
-  total_phases: 2
-  completed_phases: 2
-  total_plans: 3
-  completed_plans: 3
+  total_phases: 3
+  completed_phases: 3
+  total_plans: 4
+  completed_plans: 4
 ---
 
 # Project State
@@ -18,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-03)
 
 **Core value:** Guests receive immediate, contextual answers grounded in real property data, reducing manual support load
-**Current focus:** Phase 2 — Security Hardening
+**Current focus:** Phase 3 — Access Control
 
 ## Current Position
 
-Phase: 2 of 9 (Security Hardening)
-Plan: 2 of 2 in current phase (complete)
-Status: Phase 02 execution complete — awaiting verification
-Last activity: 2026-03-03 — Phase 02 Plans 01 and 02 complete
+Phase: 3 of 9 (Access Control)
+Plan: 1 of 1 in current phase (complete)
+Status: Phase 03 execution complete — awaiting verification
+Last activity: 2026-03-03 — Phase 03 Plan 01 complete
 
-Progress: [██░░░░░░░░] ~22% (2/9 phases in progress)
+Progress: [███░░░░░░░] ~33% (3/9 phases in progress)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2 (02-01, 02-02 complete)
-- Average duration: ~3 min
-- Total execution time: ~21 min
+- Total plans completed: 4 (01-01, 02-01, 02-02, 03-01 complete)
+- Average duration: ~6 min
+- Total execution time: ~23 min
 
 **By Phase:**
 
@@ -42,10 +42,11 @@ Progress: [██░░░░░░░░] ~22% (2/9 phases in progress)
 |-------|-------|-------|----------|
 | 01-ai-api-foundation | 1/1 | ~15 min | ~15 min |
 | 02-security-hardening | 2/2 | ~6 min | ~3 min |
+| 03-access-control | 1/1 | ~2 min | ~2 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (3 min), 02-02 (3 min)
-- Trend: —
+- Last 5 plans: 02-01 (3 min), 02-02 (3 min), 03-01 (2 min)
+- Trend: improving
 
 *Updated after each plan completion*
 
@@ -71,6 +72,8 @@ Recent decisions affecting current work:
 - [02-02]: Injection refusal returns HTTP 200 (not 4xx) — error status signals detection to attacker
 - [02-02]: UIMessage uses parts[] not content in ai@6.x — type-safe extraction required
 - [02-02]: Auth tier from x-user-id header (proxy-set, unforgeable) not session/cookie
+- [03-01]: Strip x-user-id at top of proxy() before supabaseResponse construction — ensures strippedHeaders propagate to all three NextResponse.next() call sites
+- [03-01]: Build authenticated user headers from strippedHeaders (not request.headers) — no forged value can leak through
 
 ### Pending Todos
 
@@ -86,5 +89,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Phase 02 execution complete — both plans done, awaiting verification.
+Stopped at: Phase 03 execution complete — plan 03-01 done, awaiting verification.
 Resume file: None

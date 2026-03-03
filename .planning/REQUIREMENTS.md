@@ -61,10 +61,10 @@
 
 ### Access Control
 
-- [ ] **AUTH-01**: Utenti anonimi ricevono risposte base (info proprietà generali, concierge)
-- [ ] **AUTH-02**: Utenti loggati ricevono accesso completo (booking status, pagamenti, dati personali)
-- [ ] **AUTH-03**: Il livello di accesso è determinato server-side, mai dal client
-- [ ] **AUTH-04**: Middleware aggiornato per permettere accesso anonimo a `/chat` e `/api/chat`
+- [x] **AUTH-01**: Utenti anonimi ricevono risposte base (info proprietà generali, concierge)
+- [x] **AUTH-02**: Utenti loggati ricevono accesso completo (booking status, pagamenti, dati personali)
+- [x] **AUTH-03**: Il livello di accesso è determinato server-side, mai dal client
+- [x] **AUTH-04**: Middleware aggiornato per permettere accesso anonimo a `/chat` e `/api/chat`
 
 ## v2 Requirements
 
@@ -97,10 +97,10 @@
 | SEC-02 | Phase 2 | Complete |
 | SEC-03 | Phase 2 | Complete |
 | SEC-05 | Phase 2 | Complete |
-| AUTH-01 | Phase 3 | Pending |
-| AUTH-02 | Phase 3 | Pending |
-| AUTH-03 | Phase 3 | Pending |
-| AUTH-04 | Phase 3 | Pending |
+| AUTH-01 | Phase 3 | Complete |
+| AUTH-02 | Phase 3 | Complete |
+| AUTH-03 | Phase 3 | Complete |
+| AUTH-04 | Phase 3 | Complete |
 | FAQ-01 | Phase 4 | Pending |
 | FAQ-02 | Phase 4 | Pending |
 | FAQ-03 | Phase 4 | Pending |
