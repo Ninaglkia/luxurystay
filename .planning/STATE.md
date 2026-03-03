@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 ## Current Position
 
 Phase: 2 of 9 (Security Hardening)
-Plan: 1 of 2 in current phase
-Status: Executing Phase 02 plans
-Last activity: 2026-03-03 — Phase 02 Plan 01 complete, Plan 02 in progress
+Plan: 2 of 2 in current phase (complete)
+Status: Phase 02 execution complete — awaiting verification
+Last activity: 2026-03-03 — Phase 02 Plans 01 and 02 complete
 
 Progress: [██░░░░░░░░] ~22% (2/9 phases in progress)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1 (02-01 complete)
+- Total plans completed: 2 (02-01, 02-02 complete)
 - Average duration: ~3 min
-- Total execution time: ~18 min
+- Total execution time: ~21 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-ai-api-foundation | 1/1 | ~15 min | ~15 min |
-| 02-security-hardening | 1/2 | ~3 min | ~3 min |
+| 02-security-hardening | 2/2 | ~6 min | ~3 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (3 min)
+- Last 5 plans: 02-01 (3 min), 02-02 (3 min)
 - Trend: —
 
 *Updated after each plan completion*
@@ -55,6 +55,9 @@ Recent decisions affecting current work:
 - [02-01]: ipAddress() from @vercel/functions — request.ip removed in Next.js 15
 - [02-01]: x-user-id header set server-side by proxy — cannot be forged by clients
 - [02-01]: Module-scope Ratelimit instances — function-scope breaks Upstash ephemeral caching
+- [02-02]: Injection refusal returns HTTP 200 (not 4xx) — error status signals detection to attacker
+- [02-02]: UIMessage uses parts[] not content in ai@6.x — type-safe extraction required
+- [02-02]: Auth tier from x-user-id header (proxy-set, unforgeable) not session/cookie
 
 ### Pending Todos
 
@@ -70,5 +73,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Phase 02 execution in progress — Plan 02-01 complete, Plan 02-02 executing.
-Resume file: .planning/phases/02-security-hardening/02-02-PLAN.md
+Stopped at: Phase 02 execution complete — both plans done, awaiting verification.
+Resume file: None
