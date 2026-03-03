@@ -8,7 +8,7 @@ progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -23,18 +23,18 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 ## Current Position
 
 Phase: 4 of 9 (Property FAQ Integration)
-Plan: 1 of 2 in current phase (complete)
-Status: Phase 04 in progress — plan 04-01 complete, executing 04-02
-Last activity: 2026-03-03 — Phase 04 Plan 01 complete
+Plan: 2 of 2 in current phase (complete)
+Status: Phase 04 execution complete — awaiting verification
+Last activity: 2026-03-03 — Phase 04 Plan 02 complete
 
 Progress: [████░░░░░░] ~44% (4/9 phases in progress)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5 (01-01, 02-01, 02-02, 03-01, 04-01 complete)
+- Total plans completed: 6 (01-01, 02-01, 02-02, 03-01, 04-01, 04-02 complete)
 - Average duration: ~5 min
-- Total execution time: ~25 min
+- Total execution time: ~27 min
 
 **By Phase:**
 
@@ -43,10 +43,10 @@ Progress: [████░░░░░░] ~44% (4/9 phases in progress)
 | 01-ai-api-foundation | 1/1 | ~15 min | ~15 min |
 | 02-security-hardening | 2/2 | ~6 min | ~3 min |
 | 03-access-control | 1/1 | ~2 min | ~2 min |
-| 04-property-faq-integration | 1/2 | ~2 min | ~2 min |
+| 04-property-faq-integration | 2/2 | ~4 min | ~2 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (3 min), 02-02 (3 min), 03-01 (2 min), 04-01 (2 min)
+- Last 5 plans: 02-02 (3 min), 03-01 (2 min), 04-01 (2 min), 04-02 (2 min)
 - Trend: improving
 
 *Updated after each plan completion*
@@ -78,6 +78,9 @@ Recent decisions affecting current work:
 - [04-01]: buildPropertyContext is a pure function with no Supabase dependency — testable without mocking
 - [04-01]: Null fields omitted entirely rather than showing "N/A" — cleaner system prompt
 - [04-01]: Amenity and cancellation labels kept in Italian to match existing UI patterns
+- [04-02]: UUID regex validation before any Supabase query — prevents injection and unnecessary DB calls
+- [04-02]: Property fetch wrapped in try/catch with console.error — never fails the request
+- [04-02]: propertyContextBlock appended after auth tier additions — layered system prompt
 
 ### Pending Todos
 
@@ -93,5 +96,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Phase 04 in progress — plan 04-01 done, executing 04-02.
+Stopped at: Phase 04 execution complete — both plans done, awaiting verification.
 Resume file: None

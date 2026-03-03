@@ -15,11 +15,11 @@
 
 ### AI Chat — Property FAQ
 
-- [ ] **FAQ-01**: User può chiedere info su check-in/check-out e ricevere dati reali dalla proprietà
-- [ ] **FAQ-02**: User può chiedere servizi disponibili (WiFi, parcheggio, piscina, ecc.) con dati da Supabase
-- [ ] **FAQ-03**: User può chiedere regole della casa e ricevere risposte accurate dalla proprietà specifica
-- [ ] **FAQ-04**: User può chiedere la posizione e indicazioni per raggiungere la proprietà
-- [ ] **FAQ-05**: Il chatbot risponde SOLO con dati reali da Supabase, mai inventando informazioni
+- [x] **FAQ-01**: User può chiedere info su check-in/check-out e ricevere dati reali dalla proprietà
+- [x] **FAQ-02**: User può chiedere servizi disponibili (WiFi, parcheggio, piscina, ecc.) con dati da Supabase
+- [x] **FAQ-03**: User può chiedere regole della casa e ricevere risposte accurate dalla proprietà specifica
+- [x] **FAQ-04**: User può chiedere la posizione e indicazioni per raggiungere la proprietà
+- [x] **FAQ-05**: Il chatbot risponde SOLO con dati reali da Supabase, mai inventando informazioni
 
 ### AI Chat — Booking Support
 
@@ -101,11 +101,11 @@
 | AUTH-02 | Phase 3 | Complete |
 | AUTH-03 | Phase 3 | Complete |
 | AUTH-04 | Phase 3 | Complete |
-| FAQ-01 | Phase 4 | Pending |
-| FAQ-02 | Phase 4 | Pending |
-| FAQ-03 | Phase 4 | Pending |
-| FAQ-04 | Phase 4 | Pending |
-| FAQ-05 | Phase 4 | Pending |
+| FAQ-01 | Phase 4 | Complete |
+| FAQ-02 | Phase 4 | Complete |
+| FAQ-03 | Phase 4 | Complete |
+| FAQ-04 | Phase 4 | Complete |
+| FAQ-05 | Phase 4 | Complete |
 | BOOK-01 | Phase 5 | Pending |
 | BOOK-02 | Phase 5 | Pending |
 | BOOK-03 | Phase 5 | Pending |
