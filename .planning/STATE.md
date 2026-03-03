@@ -5,32 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-03-03)
 
 **Core value:** Guests receive immediate, contextual answers grounded in real property data, reducing manual support load
-**Current focus:** Phase 1 — AI API Foundation
+**Current focus:** Phase 2 — Security Hardening
 
 ## Current Position
 
-Phase: 1 of 9 (AI API Foundation)
-Plan: 1 of 1 in current phase (awaiting human verify checkpoint)
-Status: Checkpoint — awaiting human verification (Task 3)
-Last activity: 2026-03-03 — Phase 1 Plan 1 automated tasks complete, checkpoint reached
+Phase: 2 of 9 (Security Hardening)
+Plan: 1 of 2 in current phase
+Status: Executing Phase 02 plans
+Last activity: 2026-03-03 — Phase 02 Plan 01 complete, Plan 02 in progress
 
-Progress: [█░░░░░░░░░] ~11% (1/9 phases in progress)
+Progress: [██░░░░░░░░] ~22% (2/9 phases in progress)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0 (Plan 01-01 pending human verify checkpoint)
-- Average duration: —
-- Total execution time: ~15 min (automated tasks only)
+- Total plans completed: 1 (02-01 complete)
+- Average duration: ~3 min
+- Total execution time: ~18 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-ai-api-foundation | 1 (in progress) | ~15 min | — |
+| 01-ai-api-foundation | 1/1 | ~15 min | ~15 min |
+| 02-security-hardening | 1/2 | ~3 min | ~3 min |
 
 **Recent Trend:**
-- Last 5 plans: —
+- Last 5 plans: 02-01 (3 min)
 - Trend: —
 
 *Updated after each plan completion*
@@ -50,6 +51,10 @@ Recent decisions affecting current work:
 - [01-01]: toUIMessageStreamResponse() used (not toDataStreamResponse()) for useChat hook compatibility in Phase 7
 - [01-01]: No runtime = edge export — Node.js runtime + maxDuration = 30 is sufficient (edge can conflict with Node.js APIs)
 - [01-01]: Vitest chosen as test framework — ESM-native, minimal config, works with Next.js App Router
+- [02-01]: Sliding window rate limiting (not fixed window) — prevents burst attacks at window boundaries
+- [02-01]: ipAddress() from @vercel/functions — request.ip removed in Next.js 15
+- [02-01]: x-user-id header set server-side by proxy — cannot be forged by clients
+- [02-01]: Module-scope Ratelimit instances — function-scope breaks Upstash ephemeral caching
 
 ### Pending Todos
 
@@ -58,12 +63,12 @@ None yet.
 ### Blockers/Concerns
 
 - [Pre-Phase 1 - ACTIVE]: Vercel plan tier unknown — Hobby plan has 10-second timeout making unstreamed responses impossible. Resolve during Task 3 human verification curl test.
-- [Pre-Phase 2]: Upstash Redis version-specific patterns for Vercel middleware rate limiting — verify `@upstash/ratelimit` integration at implementation time.
+- [Pre-Phase 2 - RESOLVED]: Upstash Redis @upstash/ratelimit integration verified and implemented in 02-01.
 - [Pre-Phase 4]: Actual Supabase schema (table/column names for `properties`, `bookings`) unknown — retrieve with `\d properties` and `\d bookings` before writing Phase 4 code.
 - [Pre-Phase 7]: shadcn-chatbot-kit is a community project (MEDIUM confidence) — verify CLI command and available components at `shadcn-chatbot-kit.vercel.app` before Phase 7.
 
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: 01-01-PLAN.md automated tasks complete (Tasks 1 and 2). Checkpoint Task 3 (human-verify: curl streaming test + DevTools security check) reached.
-Resume file: .planning/phases/01-ai-api-foundation/01-01-PLAN.md (Task 3)
+Stopped at: Phase 02 execution in progress — Plan 02-01 complete, Plan 02-02 executing.
+Resume file: .planning/phases/02-security-hardening/02-02-PLAN.md
