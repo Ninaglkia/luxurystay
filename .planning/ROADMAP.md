@@ -13,7 +13,7 @@ This roadmap adds a full AI concierge chatbot to an existing LuxuryStay platform
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: AI API Foundation** - Secure streaming `/api/chat` Route Handler with Anthropic provider, no UI (completed 2026-03-03)
-- [ ] **Phase 2: Security Hardening** - Rate limiting, prompt injection protection, and anonymous data boundary
+- [x] **Phase 2: Security Hardening** - Rate limiting, prompt injection protection, and anonymous data boundary (completed 2026-03-03)
 - [ ] **Phase 3: Access Control** - Server-side auth tier detection and middleware route permissions
 - [ ] **Phase 4: Property FAQ Integration** - Supabase property context injected into system prompt for grounded FAQ answers
 - [ ] **Phase 5: Booking Support** - Auth-gated booking status, payment info, and cancellation policy queries
@@ -50,8 +50,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Install @upstash/ratelimit, migrate middleware.ts to proxy.ts with rate limiting (15/min anon, 30/min auth)
-- [ ] 02-02-PLAN.md — Add prompt injection detection and differentiated system prompt by auth tier in route.ts
+- [x] 02-01-PLAN.md — Install @upstash/ratelimit, migrate middleware.ts to proxy.ts with rate limiting (15/min anon, 30/min auth)
+- [x] 02-02-PLAN.md — Add prompt injection detection and differentiated system prompt by auth tier in route.ts
 
 ### Phase 3: Access Control
 **Goal**: The server reliably distinguishes anonymous from authenticated users, and the middleware permits the correct routes without breaking existing auth
@@ -142,7 +142,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. AI API Foundation | 1/1 | Complete   | 2026-03-03 |
-| 2. Security Hardening | 0/2 | Not started | - |
+| 2. Security Hardening | 2/2 | Complete | 2026-03-03 |
 | 3. Access Control | 0/TBD | Not started | - |
 | 4. Property FAQ Integration | 0/TBD | Not started | - |
 | 5. Booking Support | 0/TBD | Not started | - |
