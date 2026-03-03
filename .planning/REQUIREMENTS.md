@@ -46,11 +46,11 @@
 
 ### UI — Chat Widget
 
-- [ ] **UI-01**: Bubble flottante in basso a destra visibile su tutte le pagine
-- [ ] **UI-02**: La bubble si apre in una finestra di chat overlay
-- [ ] **UI-03**: La bubble è lazy-loaded (non impatta il caricamento iniziale della pagina)
-- [ ] **UI-04**: La chat nella bubble è responsive e funziona su mobile
-- [ ] **UI-05**: User può minimizzare/chiudere la bubble e riaprirla senza perdere la conversazione
+- [x] **UI-01**: Bubble flottante in basso a destra visibile su tutte le pagine
+- [x] **UI-02**: La bubble si apre in una finestra di chat overlay
+- [x] **UI-03**: La bubble è lazy-loaded (non impatta il caricamento iniziale della pagina)
+- [x] **UI-04**: La chat nella bubble è responsive e funziona su mobile
+- [x] **UI-05**: User può minimizzare/chiudere la bubble e riaprirla senza perdere la conversazione
 
 ### UI — Chat Page
 
@@ -120,11 +120,11 @@
 | UX-03 | Phase 7 | Complete |
 | UX-04 | Phase 7 | Complete |
 | UX-05 | Phase 7 | Complete |
-| UI-01 | Phase 8 | Pending |
-| UI-02 | Phase 8 | Pending |
-| UI-03 | Phase 8 | Pending |
-| UI-04 | Phase 8 | Pending |
-| UI-05 | Phase 8 | Pending |
+| UI-01 | Phase 8 | Complete |
+| UI-02 | Phase 8 | Complete |
+| UI-03 | Phase 8 | Complete |
+| UI-04 | Phase 8 | Complete |
+| UI-05 | Phase 8 | Complete |
 | PAGE-01 | Phase 9 | Pending |
 | PAGE-02 | Phase 9 | Pending |
 | PAGE-03 | Phase 9 | Pending |

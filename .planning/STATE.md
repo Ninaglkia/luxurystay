@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-03T13:45:44.301Z"
+last_updated: "2026-03-03T13:59:56.000Z"
 progress:
-  total_phases: 7
-  completed_phases: 7
-  total_plans: 11
-  completed_plans: 11
+  total_phases: 8
+  completed_phases: 8
+  total_plans: 12
+  completed_plans: 12
 ---
 
 # Project State
@@ -18,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-03)
 
 **Core value:** Guests receive immediate, contextual answers grounded in real property data, reducing manual support load
-**Current focus:** Phase 7 — Chat Persona and UX Behaviors
+**Current focus:** Phase 8 — Chat Bubble Widget
 
 ## Current Position
 
-Phase: 7 of 9 (Chat Persona and UX Behaviors)
-Plan: 2 of 2 in current phase (complete)
-Status: Phase 07 execution complete — awaiting verification
-Last activity: 2026-03-03 — Phase 07 Plan 02 complete
+Phase: 8 of 9 (Chat Bubble Widget)
+Plan: 1 of 1 in current phase (complete)
+Status: Phase 08 execution complete — awaiting verification
+Last activity: 2026-03-03 — Phase 08 Plan 01 complete
 
-Progress: [███████░░░] ~78% (7/9 phases complete)
+Progress: [████████░░] ~89% (8/9 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11 (01-01, 02-01, 02-02, 03-01, 04-01, 04-02, 05-01, 05-02, 06-01, 07-01, 07-02 complete)
+- Total plans completed: 12 (01-01, 02-01, 02-02, 03-01, 04-01, 04-02, 05-01, 05-02, 06-01, 07-01, 07-02, 08-01 complete)
 - Average duration: ~3 min
-- Total execution time: ~34 min
+- Total execution time: ~35 min
 
 **By Phase:**
 
@@ -47,9 +47,10 @@ Progress: [███████░░░] ~78% (7/9 phases complete)
 | 05-booking-support | 2/2 | ~8 min | ~4 min |
 | 06-concierge-recommendations | 1/1 | ~2 min | ~2 min |
 | 07-chat-persona-and-ux-behaviors | 2/2 | ~5 min | ~2.5 min |
+| 08-chat-bubble-widget | 1/1 | ~1 min | ~1 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-02 (2 min), 05-02 (4 min), 06-01 (2 min), 07-01 (2 min), 07-02 (3 min)
+- Last 5 plans: 05-02 (4 min), 06-01 (2 min), 07-01 (2 min), 07-02 (3 min), 08-01 (1 min)
 - Trend: consistently fast
 
 *Updated after each plan completion*
@@ -93,6 +94,9 @@ Recent decisions affecting current work:
 - [07-02]: sessionStorage key namespaced by propertyId — prevents cross-property history bleed
 - [07-02]: DefaultChatTransport body function form — prevents stale closure when propertyId changes
 - [07-02]: Italian UI text for chips, placeholder, labels — matches platform language consistency
+- [08-01]: Inline SVG icons for FAB — no icon library dependency for two simple shapes
+- [08-01]: dvh units for overlay height — adapts to iOS keyboard without JS resize listeners
+- [08-01]: Client wrapper shim pattern — thin 'use client' component holds next/dynamic call so Server Component layout can use ssr:false
 
 ### Pending Todos
 
@@ -108,5 +112,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Completed 07-02-PLAN.md — Phase 07 complete
+Stopped at: Completed 08-01-PLAN.md — Phase 08 complete
 Resume file: None
