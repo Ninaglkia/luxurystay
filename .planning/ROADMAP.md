@@ -153,7 +153,10 @@ Plans:
   2. Both anonymous visitors and logged-in users can access `/chat` without being redirected
   3. As a long conversation accumulates, the message list automatically scrolls to show the latest message
   4. A user can send a message by pressing Enter on desktop or tapping the send button on mobile, and both behave identically
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 09-01-PLAN.md — Replace dev harness with full-screen layout + add auto-scroll to ChatMessages
 
 ## Progress
 
@@ -170,4 +173,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 6. Concierge Recommendations | 0/1 | Not started | - |
 | 7. Chat Persona and UX Behaviors | 0/TBD | Not started | - |
 | 8. Chat Bubble Widget | 0/1 | Not started | - |
-| 9. Dedicated Chat Page | 0/TBD | Not started | - |
+| 9. Dedicated Chat Page | 0/1 | Not started | - |
