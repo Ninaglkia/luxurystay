@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-03T14:02:49.917Z"
+last_updated: "2026-03-03T15:00:00.000Z"
 progress:
-  total_phases: 8
-  completed_phases: 8
-  total_plans: 12
-  completed_plans: 12
+  total_phases: 9
+  completed_phases: 9
+  total_plans: 13
+  completed_plans: 13
 ---
 
 # Project State
@@ -18,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-03)
 
 **Core value:** Guests receive immediate, contextual answers grounded in real property data, reducing manual support load
-**Current focus:** Phase 8 — Chat Bubble Widget
+**Current focus:** Phase 9 — Dedicated Chat Page (COMPLETE)
 
 ## Current Position
 
-Phase: 8 of 9 (Chat Bubble Widget)
+Phase: 9 of 9 (Dedicated Chat Page)
 Plan: 1 of 1 in current phase (complete)
-Status: Phase 08 execution complete — awaiting verification
-Last activity: 2026-03-03 — Phase 08 Plan 01 complete
+Status: Phase 09 execution complete — all phases done
+Last activity: 2026-03-03 — Phase 09 Plan 01 complete
 
-Progress: [████████░░] ~89% (8/9 phases complete)
+Progress: [██████████] 100% (9/9 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12 (01-01, 02-01, 02-02, 03-01, 04-01, 04-02, 05-01, 05-02, 06-01, 07-01, 07-02, 08-01 complete)
+- Total plans completed: 13 (01-01, 02-01, 02-02, 03-01, 04-01, 04-02, 05-01, 05-02, 06-01, 07-01, 07-02, 08-01, 09-01 complete)
 - Average duration: ~3 min
-- Total execution time: ~35 min
+- Total execution time: ~37 min
 
 **By Phase:**
 
@@ -48,9 +48,10 @@ Progress: [████████░░] ~89% (8/9 phases complete)
 | 06-concierge-recommendations | 1/1 | ~2 min | ~2 min |
 | 07-chat-persona-and-ux-behaviors | 2/2 | ~5 min | ~2.5 min |
 | 08-chat-bubble-widget | 1/1 | ~1 min | ~1 min |
+| 09-dedicated-chat-page | 1/1 | ~2 min | ~2 min |
 
 **Recent Trend:**
-- Last 5 plans: 05-02 (4 min), 06-01 (2 min), 07-01 (2 min), 07-02 (3 min), 08-01 (1 min)
+- Last 5 plans: 06-01 (2 min), 07-01 (2 min), 07-02 (3 min), 08-01 (1 min), 09-01 (2 min)
 - Trend: consistently fast
 
 *Updated after each plan completion*
@@ -97,6 +98,9 @@ Recent decisions affecting current work:
 - [08-01]: Inline SVG icons for FAB — no icon library dependency for two simple shapes
 - [08-01]: dvh units for overlay height — adapts to iOS keyboard without JS resize listeners
 - [08-01]: Client wrapper shim pattern — thin 'use client' component holds next/dynamic call so Server Component layout can use ssr:false
+- [09-01]: h-dvh instead of 100vh — accounts for iOS Safari virtual keyboard without JS resize listeners
+- [09-01]: smooth scroll behavior as default for auto-scroll — can switch to instant if streaming jitter observed
+- [09-01]: Universal auto-scroll (no conditional prop) — both /chat page and bubble overlay benefit
 
 ### Pending Todos
 
@@ -112,5 +116,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Completed 08-01-PLAN.md — Phase 08 complete
+Stopped at: Completed 09-01-PLAN.md — Phase 09 complete (ALL PHASES DONE)
 Resume file: None
