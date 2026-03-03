@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-03T13:13:42.679Z"
+last_updated: "2026-03-03T13:25:57.000Z"
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 8
-  completed_plans: 8
+  total_phases: 6
+  completed_phases: 6
+  total_plans: 9
+  completed_plans: 9
 ---
 
 # Project State
@@ -18,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-03)
 
 **Core value:** Guests receive immediate, contextual answers grounded in real property data, reducing manual support load
-**Current focus:** Phase 5 — Booking Support
+**Current focus:** Phase 6 — Concierge Recommendations
 
 ## Current Position
 
-Phase: 5 of 9 (Booking Support)
-Plan: 2 of 2 in current phase (complete)
-Status: Phase 05 execution complete — awaiting verification
-Last activity: 2026-03-03 — Phase 05 Plan 02 complete
+Phase: 6 of 9 (Concierge Recommendations)
+Plan: 1 of 1 in current phase (complete)
+Status: Phase 06 execution complete — awaiting verification
+Last activity: 2026-03-03 — Phase 06 Plan 01 complete
 
-Progress: [█████░░░░░] ~50% (5/9 phases in progress)
+Progress: [██████░░░░] ~67% (6/9 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8 (01-01, 02-01, 02-02, 03-01, 04-01, 04-02, 05-01, 05-02 complete)
-- Average duration: ~5 min
-- Total execution time: ~27 min
+- Total plans completed: 9 (01-01, 02-01, 02-02, 03-01, 04-01, 04-02, 05-01, 05-02, 06-01 complete)
+- Average duration: ~3 min
+- Total execution time: ~29 min
 
 **By Phase:**
 
@@ -45,10 +45,11 @@ Progress: [█████░░░░░] ~50% (5/9 phases in progress)
 | 03-access-control | 1/1 | ~2 min | ~2 min |
 | 04-property-faq-integration | 2/2 | ~4 min | ~2 min |
 | 05-booking-support | 2/2 | ~8 min | ~4 min |
+| 06-concierge-recommendations | 1/1 | ~2 min | ~2 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-02 (3 min), 03-01 (2 min), 04-01 (2 min), 04-02 (2 min)
-- Trend: improving
+- Last 5 plans: 03-01 (2 min), 04-01 (2 min), 04-02 (2 min), 05-02 (4 min), 06-01 (2 min)
+- Trend: consistently fast
 
 *Updated after each plan completion*
 
@@ -82,6 +83,9 @@ Recent decisions affecting current work:
 - [04-02]: UUID regex validation before any Supabase query — prevents injection and unnecessary DB calls
 - [04-02]: Property fetch wrapped in try/catch with console.error — never fails the request
 - [04-02]: propertyContextBlock appended after auth tier additions — layered system prompt
+- [06-01]: System prompt engineering over Google Places API — LLM training knowledge sufficient for Italian destination recommendations
+- [06-01]: Concierge block applies to all users (anon + auth) when property loaded — no auth gating per AUTH-01
+- [06-01]: "Suggestions to explore" framing mitigates stale training data risk
 
 ### Pending Todos
 
@@ -97,5 +101,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Completed 05-02-PLAN.md — Phase 05 complete
+Stopped at: Completed 06-01-PLAN.md — Phase 06 complete
 Resume file: None

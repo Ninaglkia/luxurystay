@@ -31,10 +31,10 @@
 
 ### AI Chat — Concierge
 
-- [ ] **CONC-01**: User può chiedere raccomandazioni di ristoranti vicini alla proprietà
-- [ ] **CONC-02**: User può chiedere info su trasporti (come arrivare, taxi, noleggio auto)
-- [ ] **CONC-03**: User può chiedere esperienze locali e attività (spiagge, escursioni, musei)
-- [ ] **CONC-04**: Il chatbot fornisce suggerimenti contestuali basati sulla posizione della proprietà
+- [x] **CONC-01**: User può chiedere raccomandazioni di ristoranti vicini alla proprietà
+- [x] **CONC-02**: User può chiedere info su trasporti (come arrivare, taxi, noleggio auto)
+- [x] **CONC-03**: User può chiedere esperienze locali e attività (spiagge, escursioni, musei)
+- [x] **CONC-04**: Il chatbot fornisce suggerimenti contestuali basati sulla posizione della proprietà
 
 ### AI Chat — Persona & UX
 
@@ -111,10 +111,10 @@
 | BOOK-03 | Phase 5 | Complete |
 | BOOK-04 | Phase 5 | Complete |
 | BOOK-05 | Phase 5 | Complete |
-| CONC-01 | Phase 6 | Pending |
-| CONC-02 | Phase 6 | Pending |
-| CONC-03 | Phase 6 | Pending |
-| CONC-04 | Phase 6 | Pending |
+| CONC-01 | Phase 6 | Complete |
+| CONC-02 | Phase 6 | Complete |
+| CONC-03 | Phase 6 | Complete |
+| CONC-04 | Phase 6 | Complete |
 | UX-01 | Phase 7 | Pending |
 | UX-02 | Phase 7 | Pending |
 | UX-03 | Phase 7 | Pending |
