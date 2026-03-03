@@ -123,7 +123,11 @@ Plans:
   3. When the chatbot cannot answer a question, it explicitly says so and directs the user to contact the host or support — it never fabricates a guess
   4. AI responses appear character-by-character as they are generated, not delivered all at once after a delay
   5. A user who sends several messages, scrolls up, and scrolls back down still sees the full conversation history for that browser session
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Refine system prompt: luxury persona tone and graceful fallback instructions
+- [ ] 07-02-PLAN.md — Chat UI components (ChatWidget, ChatMessages, ChatInput, ChatChips) + /chat dev harness
 
 ### Phase 8: Chat Bubble Widget
 **Goal**: A floating chat button is visible on every page of the platform and opens a functional chat overlay without impacting page load performance
