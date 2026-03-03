@@ -14,9 +14,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: AI API Foundation** - Secure streaming `/api/chat` Route Handler with Anthropic provider, no UI (completed 2026-03-03)
 - [x] **Phase 2: Security Hardening** - Rate limiting, prompt injection protection, and anonymous data boundary (completed 2026-03-03)
-- [ ] **Phase 3: Access Control** - Server-side auth tier detection and middleware route permissions
-- [ ] **Phase 4: Property FAQ Integration** - Supabase property context injected into system prompt for grounded FAQ answers
-- [ ] **Phase 5: Booking Support** - Auth-gated booking status, payment info, and cancellation policy queries
+- [x] **Phase 3: Access Control** - Server-side auth tier detection and middleware route permissions (completed 2026-03-03)
+- [x] **Phase 4: Property FAQ Integration** - Supabase property context injected into system prompt for grounded FAQ answers (completed 2026-03-03)
+- [x] **Phase 5: Booking Support** - Auth-gated booking status, payment info, and cancellation policy queries (completed 2026-03-03)
 - [ ] **Phase 6: Concierge Recommendations** - Location-aware restaurant, transport, and local experience suggestions
 - [ ] **Phase 7: Chat Persona and UX Behaviors** - Luxury persona, streaming UX, suggested chips, graceful fallback, session history
 - [ ] **Phase 8: Chat Bubble Widget** - Lazy-loaded floating bubble present on all pages
@@ -154,9 +154,9 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 |-------|----------------|--------|-----------|
 | 1. AI API Foundation | 1/1 | Complete   | 2026-03-03 |
 | 2. Security Hardening | 2/2 | Complete | 2026-03-03 |
-| 3. Access Control | 0/1 | Not started | - |
-| 4. Property FAQ Integration | 0/2 | Not started | - |
-| 5. Booking Support | 0/2 | Not started | - |
+| 3. Access Control | 1/1 | Complete | 2026-03-03 |
+| 4. Property FAQ Integration | 2/2 | Complete | 2026-03-03 |
+| 5. Booking Support | 2/2 | Complete | 2026-03-03 |
 | 6. Concierge Recommendations | 0/TBD | Not started | - |
 | 7. Chat Persona and UX Behaviors | 0/TBD | Not started | - |
 | 8. Chat Bubble Widget | 0/TBD | Not started | - |
