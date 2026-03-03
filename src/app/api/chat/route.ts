@@ -6,6 +6,8 @@
 
 import { streamText, UIMessage, convertToModelMessages } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
+import { buildPropertyContext, PropertyRecord } from './property-context'
+import { getAdminSupabase } from '@/lib/admin-supabase'
 
 // Required: explicit timeout for Vercel streaming reliability
 // 30s is safe for all plans with Fluid Compute enabled (Hobby max 300s, Pro max 800s)
@@ -67,9 +69,12 @@ and personalized account information when that data is provided to you in this c
 export async function POST(req: Request) {
   let messages: UIMessage[]
 
+  let propertyId: string | null = null
+
   try {
     const body = await req.json()
     messages = body.messages
+    propertyId = typeof body.propertyId === 'string' ? body.propertyId : null
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid request body' }), {
       status: 400,
@@ -124,7 +129,34 @@ export async function POST(req: Request) {
   const userId = req.headers.get('x-user-id')
   const isAuthenticated = Boolean(userId)
 
-  const systemPrompt = SYSTEM_PROMPT_BASE + (isAuthenticated ? AUTH_ADDITIONS : ANON_ADDITIONS)
+  // Property context injection — fetch from Supabase if valid UUID provided
+  let propertyContextBlock = ''
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+  if (propertyId && UUID_RE.test(propertyId)) {
+    try {
+      const adminClient = getAdminSupabase()
+      const { data: property } = await adminClient
+        .from('properties')
+        .select(
+          'title, description, address, lat, lng, price, category, space_type, guests, bedrooms, beds, bathrooms, amenities, cancellation_policy, checkin_time, checkout_time, house_rules'
+        )
+        .eq('id', propertyId)
+        .single()
+
+      if (property) {
+        propertyContextBlock = '\n\n' + buildPropertyContext(property as PropertyRecord)
+      }
+    } catch (err) {
+      // Log but never fail the request — degrade gracefully to base system prompt
+      console.error('[PROPERTY] Failed to fetch property context', { propertyId, err })
+    }
+  }
+
+  const systemPrompt =
+    SYSTEM_PROMPT_BASE +
+    (isAuthenticated ? AUTH_ADDITIONS : ANON_ADDITIONS) +
+    propertyContextBlock
 
   const result = streamText({
     model: anthropic('claude-haiku-4-5'),
