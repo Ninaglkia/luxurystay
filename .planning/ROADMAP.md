@@ -93,7 +93,11 @@ Plans:
   3. A user asking about the cancellation policy receives the policy specific to that property
   4. A user asking how to modify or cancel their booking receives a response with a direct link to the relevant page, not a description of how to find it
   5. A user asking whether a property is available for specific dates receives a meaningful answer based on current availability data
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — buildBookingContext() pure serializer with TDD (BookingRecord, PaymentRecord, direct links)
+- [ ] 05-02-PLAN.md — Wire booking context + availability block into route.ts with full integration tests
 
 ### Phase 6: Concierge Recommendations
 **Goal**: The chatbot provides contextually relevant local recommendations (restaurants, transport, activities) based on the property's geographic location
@@ -152,7 +156,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 2. Security Hardening | 2/2 | Complete | 2026-03-03 |
 | 3. Access Control | 0/1 | Not started | - |
 | 4. Property FAQ Integration | 0/2 | Not started | - |
-| 5. Booking Support | 0/TBD | Not started | - |
+| 5. Booking Support | 0/2 | Not started | - |
 | 6. Concierge Recommendations | 0/TBD | Not started | - |
 | 7. Chat Persona and UX Behaviors | 0/TBD | Not started | - |
 | 8. Chat Bubble Widget | 0/TBD | Not started | - |
