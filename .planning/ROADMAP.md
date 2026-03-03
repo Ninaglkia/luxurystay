@@ -62,7 +62,10 @@ Plans:
   2. An authenticated user's session is detected server-side and their tier is elevated to full access
   3. Auth tier is never determined by a value sent from the client — tampering a client request does not elevate access
   4. Existing authenticated routes (dashboard, booking) continue to require login as before
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 03-01-PLAN.md — Fix x-user-id header stripping bug in proxy.ts and add AUTH regression tests
 
 ### Phase 4: Property FAQ Integration
 **Goal**: The chatbot answers property-specific factual questions using only real data fetched from Supabase — no hallucinated answers
@@ -143,7 +146,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 |-------|----------------|--------|-----------|
 | 1. AI API Foundation | 1/1 | Complete   | 2026-03-03 |
 | 2. Security Hardening | 2/2 | Complete | 2026-03-03 |
-| 3. Access Control | 0/TBD | Not started | - |
+| 3. Access Control | 0/1 | Not started | - |
 | 4. Property FAQ Integration | 0/TBD | Not started | - |
 | 5. Booking Support | 0/TBD | Not started | - |
 | 6. Concierge Recommendations | 0/TBD | Not started | - |
