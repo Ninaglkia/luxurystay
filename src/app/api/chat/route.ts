@@ -7,6 +7,7 @@
 import { streamText, UIMessage, convertToModelMessages } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { buildPropertyContext, PropertyRecord } from './property-context'
+import { buildConciergeContext } from './concierge-context'
 import { buildBookingContext, BookingRecord, PaymentRecord } from './booking-context'
 import { getAdminSupabase } from '@/lib/admin-supabase'
 
@@ -147,6 +148,7 @@ export async function POST(req: Request) {
 
       if (property) {
         propertyContextBlock = '\n\n' + buildPropertyContext(property as PropertyRecord)
+        propertyContextBlock += '\n\n' + buildConciergeContext(property as PropertyRecord)  // Phase 06
       }
 
       // BOOK-05: Fetch booked date ranges so AI can answer availability questions
