@@ -139,7 +139,10 @@ Plans:
   3. The bubble component does not appear in the initial page HTML — it is loaded lazily and does not delay first contentful paint
   4. The bubble chat overlay is fully usable on a mobile phone screen (inputs reachable, messages readable, no overflow)
   5. A user who closes the bubble and reopens it without navigating away sees their previous messages still present
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 08-01-PLAN.md — ChatBubble FAB + AnimatePresence overlay + ChatBubbleWrapper lazy shim wired into layout.tsx
 
 ### Phase 9: Dedicated Chat Page
 **Goal**: A full-screen `/chat` page exists where users can have extended conversations with the concierge in an optimized layout
@@ -166,5 +169,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 5. Booking Support | 2/2 | Complete | 2026-03-03 |
 | 6. Concierge Recommendations | 0/1 | Not started | - |
 | 7. Chat Persona and UX Behaviors | 0/TBD | Not started | - |
-| 8. Chat Bubble Widget | 0/TBD | Not started | - |
+| 8. Chat Bubble Widget | 0/1 | Not started | - |
 | 9. Dedicated Chat Page | 0/TBD | Not started | - |
