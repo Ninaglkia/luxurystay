@@ -18,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-03)
 
 **Core value:** Guests receive immediate, contextual answers grounded in real property data, reducing manual support load
-**Current focus:** Phase 6 — Concierge Recommendations
+**Current focus:** Phase 7 — Chat Persona and UX Behaviors
 
 ## Current Position
 
-Phase: 6 of 9 (Concierge Recommendations)
-Plan: 1 of 1 in current phase (complete)
-Status: Phase 06 execution complete — awaiting verification
-Last activity: 2026-03-03 — Phase 06 Plan 01 complete
+Phase: 7 of 9 (Chat Persona and UX Behaviors)
+Plan: 2 of 2 in current phase (complete)
+Status: Phase 07 execution complete — awaiting verification
+Last activity: 2026-03-03 — Phase 07 Plan 02 complete
 
-Progress: [██████░░░░] ~67% (6/9 phases complete)
+Progress: [███████░░░] ~78% (7/9 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9 (01-01, 02-01, 02-02, 03-01, 04-01, 04-02, 05-01, 05-02, 06-01 complete)
+- Total plans completed: 11 (01-01, 02-01, 02-02, 03-01, 04-01, 04-02, 05-01, 05-02, 06-01, 07-01, 07-02 complete)
 - Average duration: ~3 min
-- Total execution time: ~29 min
+- Total execution time: ~34 min
 
 **By Phase:**
 
@@ -46,9 +46,10 @@ Progress: [██████░░░░] ~67% (6/9 phases complete)
 | 04-property-faq-integration | 2/2 | ~4 min | ~2 min |
 | 05-booking-support | 2/2 | ~8 min | ~4 min |
 | 06-concierge-recommendations | 1/1 | ~2 min | ~2 min |
+| 07-chat-persona-and-ux-behaviors | 2/2 | ~5 min | ~2.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 (2 min), 04-01 (2 min), 04-02 (2 min), 05-02 (4 min), 06-01 (2 min)
+- Last 5 plans: 04-02 (2 min), 05-02 (4 min), 06-01 (2 min), 07-01 (2 min), 07-02 (3 min)
 - Trend: consistently fast
 
 *Updated after each plan completion*
@@ -86,6 +87,12 @@ Recent decisions affecting current work:
 - [06-01]: System prompt engineering over Google Places API — LLM training knowledge sufficient for Italian destination recommendations
 - [06-01]: Concierge block applies to all users (anon + auth) when property loaded — no auth gating per AUTH-01
 - [06-01]: "Suggestions to explore" framing mitigates stale training data risk
+- [07-01]: TONE AND VOICE block with WRONG/RIGHT examples in SYSTEM_PROMPT_BASE — formal, warm, no exclamation marks or emojis
+- [07-01]: FALLBACK INSTRUCTIONS block prohibits "I believe"/"I think" guessing — explicit "I don't know" + dual redirect to host and support
+- [07-02]: @ai-sdk/react installed separately — not bundled with ai package in v6
+- [07-02]: sessionStorage key namespaced by propertyId — prevents cross-property history bleed
+- [07-02]: DefaultChatTransport body function form — prevents stale closure when propertyId changes
+- [07-02]: Italian UI text for chips, placeholder, labels — matches platform language consistency
 
 ### Pending Todos
 
@@ -96,10 +103,10 @@ None yet.
 - [Pre-Phase 1 - ACTIVE]: Vercel plan tier unknown — Hobby plan has 10-second timeout making unstreamed responses impossible. Resolve during Task 3 human verification curl test.
 - [Pre-Phase 2 - RESOLVED]: Upstash Redis @upstash/ratelimit integration verified and implemented in 02-01.
 - [Pre-Phase 4]: Actual Supabase schema (table/column names for `properties`, `bookings`) unknown — retrieve with `\d properties` and `\d bookings` before writing Phase 4 code.
-- [Pre-Phase 7]: shadcn-chatbot-kit is a community project (MEDIUM confidence) — verify CLI command and available components at `shadcn-chatbot-kit.vercel.app` before Phase 7.
+- [Pre-Phase 7 - RESOLVED]: shadcn-chatbot-kit not used — hand-rolled components with useChat + Tailwind are simpler and sufficient for Phase 7.
 
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Completed 06-01-PLAN.md — Phase 06 complete
+Stopped at: Completed 07-02-PLAN.md — Phase 07 complete
 Resume file: None
