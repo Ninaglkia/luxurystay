@@ -92,49 +92,49 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEC-01 | — | Pending |
-| SEC-02 | — | Pending |
-| SEC-03 | — | Pending |
-| SEC-04 | — | Pending |
-| SEC-05 | — | Pending |
-| FAQ-01 | — | Pending |
-| FAQ-02 | — | Pending |
-| FAQ-03 | — | Pending |
-| FAQ-04 | — | Pending |
-| FAQ-05 | — | Pending |
-| BOOK-01 | — | Pending |
-| BOOK-02 | — | Pending |
-| BOOK-03 | — | Pending |
-| BOOK-04 | — | Pending |
-| BOOK-05 | — | Pending |
-| CONC-01 | — | Pending |
-| CONC-02 | — | Pending |
-| CONC-03 | — | Pending |
-| CONC-04 | — | Pending |
-| UX-01 | — | Pending |
-| UX-02 | — | Pending |
-| UX-03 | — | Pending |
-| UX-04 | — | Pending |
-| UX-05 | — | Pending |
-| UI-01 | — | Pending |
-| UI-02 | — | Pending |
-| UI-03 | — | Pending |
-| UI-04 | — | Pending |
-| UI-05 | — | Pending |
-| PAGE-01 | — | Pending |
-| PAGE-02 | — | Pending |
-| PAGE-03 | — | Pending |
-| PAGE-04 | — | Pending |
-| AUTH-01 | — | Pending |
-| AUTH-02 | — | Pending |
-| AUTH-03 | — | Pending |
-| AUTH-04 | — | Pending |
+| SEC-01 | Phase 1 | Pending |
+| SEC-04 | Phase 1 | Pending |
+| SEC-02 | Phase 2 | Pending |
+| SEC-03 | Phase 2 | Pending |
+| SEC-05 | Phase 2 | Pending |
+| AUTH-01 | Phase 3 | Pending |
+| AUTH-02 | Phase 3 | Pending |
+| AUTH-03 | Phase 3 | Pending |
+| AUTH-04 | Phase 3 | Pending |
+| FAQ-01 | Phase 4 | Pending |
+| FAQ-02 | Phase 4 | Pending |
+| FAQ-03 | Phase 4 | Pending |
+| FAQ-04 | Phase 4 | Pending |
+| FAQ-05 | Phase 4 | Pending |
+| BOOK-01 | Phase 5 | Pending |
+| BOOK-02 | Phase 5 | Pending |
+| BOOK-03 | Phase 5 | Pending |
+| BOOK-04 | Phase 5 | Pending |
+| BOOK-05 | Phase 5 | Pending |
+| CONC-01 | Phase 6 | Pending |
+| CONC-02 | Phase 6 | Pending |
+| CONC-03 | Phase 6 | Pending |
+| CONC-04 | Phase 6 | Pending |
+| UX-01 | Phase 7 | Pending |
+| UX-02 | Phase 7 | Pending |
+| UX-03 | Phase 7 | Pending |
+| UX-04 | Phase 7 | Pending |
+| UX-05 | Phase 7 | Pending |
+| UI-01 | Phase 8 | Pending |
+| UI-02 | Phase 8 | Pending |
+| UI-03 | Phase 8 | Pending |
+| UI-04 | Phase 8 | Pending |
+| UI-05 | Phase 8 | Pending |
+| PAGE-01 | Phase 9 | Pending |
+| PAGE-02 | Phase 9 | Pending |
+| PAGE-03 | Phase 9 | Pending |
+| PAGE-04 | Phase 9 | Pending |
 
 **Coverage:**
 - v1 requirements: 37 total
-- Mapped to phases: 0
-- Unmapped: 37 ⚠️
+- Mapped to phases: 37
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-03*
-*Last updated: 2026-03-03 after initial definition*
+*Last updated: 2026-03-03 after roadmap creation — all requirements mapped*
