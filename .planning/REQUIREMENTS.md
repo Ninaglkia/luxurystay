@@ -54,10 +54,10 @@
 
 ### UI — Chat Page
 
-- [ ] **PAGE-01**: Pagina dedicata `/chat` con interfaccia full-screen
-- [ ] **PAGE-02**: La pagina `/chat` è accessibile sia da utenti loggati che anonimi
-- [ ] **PAGE-03**: Layout ottimizzato per conversazioni lunghe con auto-scroll
-- [ ] **PAGE-04**: Input area con supporto per invio con Enter e pulsante send
+- [x] **PAGE-01**: Pagina dedicata `/chat` con interfaccia full-screen
+- [x] **PAGE-02**: La pagina `/chat` è accessibile sia da utenti loggati che anonimi
+- [x] **PAGE-03**: Layout ottimizzato per conversazioni lunghe con auto-scroll
+- [x] **PAGE-04**: Input area con supporto per invio con Enter e pulsante send
 
 ### Access Control
 
@@ -125,10 +125,10 @@
 | UI-03 | Phase 8 | Complete |
 | UI-04 | Phase 8 | Complete |
 | UI-05 | Phase 8 | Complete |
-| PAGE-01 | Phase 9 | Pending |
-| PAGE-02 | Phase 9 | Pending |
-| PAGE-03 | Phase 9 | Pending |
-| PAGE-04 | Phase 9 | Pending |
+| PAGE-01 | Phase 9 | Complete |
+| PAGE-02 | Phase 9 | Complete |
+| PAGE-03 | Phase 9 | Complete |
+| PAGE-04 | Phase 9 | Complete |
 
 **Coverage:**
 - v1 requirements: 37 total
