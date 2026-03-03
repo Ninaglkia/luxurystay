@@ -27,7 +27,7 @@
 - [x] **BOOK-02**: User loggato può chiedere info su pagamenti (deposito versato, saldo rimanente)
 - [x] **BOOK-03**: User può chiedere la politica di cancellazione della proprietà
 - [x] **BOOK-04**: User può chiedere come modificare o cancellare una prenotazione (con link alle azioni)
-- [ ] **BOOK-05**: User può chiedere aiuto nel processo di prenotazione (disponibilità, prezzi)
+- [x] **BOOK-05**: User può chiedere aiuto nel processo di prenotazione (disponibilità, prezzi)
 
 ### AI Chat — Concierge
 
@@ -110,7 +110,7 @@
 | BOOK-02 | Phase 5 | Complete |
 | BOOK-03 | Phase 5 | Complete |
 | BOOK-04 | Phase 5 | Complete |
-| BOOK-05 | Phase 5 | Pending |
+| BOOK-05 | Phase 5 | Complete |
 | CONC-01 | Phase 6 | Pending |
 | CONC-02 | Phase 6 | Pending |
 | CONC-03 | Phase 6 | Pending |
