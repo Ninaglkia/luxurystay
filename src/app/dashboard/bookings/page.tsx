@@ -101,16 +101,23 @@ export default function GuestBookingsPage() {
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-neutral-900 mb-6">
-        Le mie prenotazioni
-      </h1>
+    <div className="max-w-3xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-neutral-900">
+          Le mie prenotazioni
+        </h1>
+        <p className="text-sm text-neutral-500 mt-1">
+          {bookings.length > 0
+            ? `${bookings.length} prenotazion${bookings.length === 1 ? "e" : "i"} totali`
+            : "Gestisci i tuoi soggiorni"}
+        </p>
+      </div>
 
       {bookings.length === 0 ? (
-        <div className="text-center py-20">
-          <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-4">
+        <div className="bg-white border border-neutral-200 rounded-2xl p-10 sm:p-16 text-center">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-50 to-purple-100 flex items-center justify-center mx-auto mb-6">
             <svg
-              className="w-8 h-8 text-neutral-400"
+              className="w-10 h-10 text-violet-400"
               fill="none"
               viewBox="0 0 24 24"
               strokeWidth={1.5}
@@ -123,16 +130,19 @@ export default function GuestBookingsPage() {
               />
             </svg>
           </div>
-          <h2 className="text-lg font-semibold text-neutral-900 mb-2">
+          <h2 className="text-xl font-semibold text-neutral-900 mb-2">
             Nessuna prenotazione
           </h2>
-          <p className="text-neutral-500 mb-6">
-            Non hai ancora effettuato prenotazioni.
+          <p className="text-neutral-500 text-sm mb-8 max-w-sm mx-auto leading-relaxed">
+            Non hai ancora effettuato prenotazioni. Esplora le destinazioni disponibili e prenota il tuo prossimo soggiorno.
           </p>
           <button
             onClick={() => router.push("/dashboard")}
-            className="px-6 py-3 bg-neutral-900 text-white rounded-xl text-sm font-semibold hover:bg-neutral-800 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-neutral-900 text-white rounded-xl text-sm font-semibold hover:bg-neutral-800 transition-colors cursor-pointer"
           >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
             Esplora alloggi
           </button>
         </div>
