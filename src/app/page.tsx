@@ -73,7 +73,7 @@ export default function Home() {
       </header>
 
       {/* Map + Properties */}
-      <main className="flex-1 flex flex-col p-4 lg:p-6">
+      <main className="flex-1 flex flex-col p-4 lg:p-6 min-h-[calc(100vh-4rem)]">
         <ExploreMap />
       </main>
 
