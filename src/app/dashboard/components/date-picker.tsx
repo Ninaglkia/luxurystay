@@ -40,6 +40,11 @@ function formatDate(date: Date | null) {
   return date.toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" });
 }
 
+function formatDateShort(date: Date | null) {
+  if (!date) return "";
+  return date.toLocaleDateString("it-IT", { day: "numeric", month: "short" });
+}
+
 function CalendarMonth({
   year, month, checkIn, checkOut, hoverDate, onDateClick, onDateHover,
 }: {
@@ -210,8 +215,24 @@ export function DatePicker({ checkIn, checkOut, onDatesChange }: DatePickerProps
 
   return (
     <div ref={ref} className="relative">
-      {/* Trigger */}
-      <div className="flex border border-neutral-200 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
+      {/* Trigger — compact on mobile, two-panel on desktop */}
+      {/* Mobile trigger */}
+      <button
+        onClick={() => { setIsOpen(true); setSelecting(checkIn && !checkOut ? "checkOut" : "checkIn"); }}
+        className="lg:hidden w-full text-left px-4 py-2.5 border border-neutral-200 rounded-xl bg-white shadow-sm active:bg-neutral-50 cursor-pointer"
+      >
+        <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Date</p>
+        <p className={`text-sm mt-0.5 ${checkIn ? "text-neutral-900 font-semibold" : "text-neutral-400"}`}>
+          {checkIn && checkOut
+            ? `${formatDateShort(checkIn)} - ${formatDateShort(checkOut)}`
+            : checkIn
+              ? `${formatDateShort(checkIn)} - ...`
+              : "Aggiungi date"}
+        </p>
+      </button>
+
+      {/* Desktop trigger */}
+      <div className="hidden lg:flex border border-neutral-200 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
         <button
           onClick={() => { setIsOpen(true); setSelecting("checkIn"); }}
           className={`px-4 py-2.5 text-left cursor-pointer transition-colors min-w-[120px] ${isOpen && selecting === "checkIn" ? "bg-neutral-50 ring-2 ring-inset ring-neutral-900 rounded-l-xl" : "hover:bg-neutral-50"}`}

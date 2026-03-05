@@ -6,7 +6,6 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 import { ipAddress } from "@vercel/functions"
-import { anonRatelimit, authRatelimit } from "@/lib/ratelimit"
 
 export async function proxy(request: NextRequest) {
   // SECURITY: Strip any client-supplied x-user-id. This header is set exclusively
@@ -48,6 +47,9 @@ export async function proxy(request: NextRequest) {
   // Rate limit /api/chat only — other routes are unaffected
   if (request.nextUrl.pathname === "/api/chat") {
     // CRITICAL: Use ipAddress() from @vercel/functions — request.ip was removed in Next.js 15
+    // Lazy import — avoid crashing all routes if Redis is unreachable
+    const { anonRatelimit, authRatelimit } = await import("@/lib/ratelimit")
+
     const ip = ipAddress(request) ?? "anonymous"
     const identifier = user ? `auth:${user.id}` : `anon:${ip}`
     const limiter = user ? authRatelimit : anonRatelimit

@@ -596,19 +596,30 @@ export function ExploreMap() {
   // Current map bounds
   const [bounds, setBounds] = useState<Bounds | null>(null);
 
-  // Load all properties + wishlist once
+  // Load all properties + wishlist once (with retry on failure)
   useEffect(() => {
-    async function load() {
+    let cancelled = false;
+
+    async function load(attempt = 0) {
       const supabase = createClient();
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("properties")
         .select("id, title, price, lat, lng, photos, category, address, bedrooms, beds, bathrooms, guests, amenities")
         .eq("status", "active");
+
+      if (cancelled) return;
+
+      if (error && attempt < 2) {
+        // Retry after a short delay (1s, 2s)
+        setTimeout(() => load(attempt + 1), (attempt + 1) * 1000);
+        return;
+      }
+
       if (data) setAllProperties(data);
 
       // Load user wishlist
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      if (user && !cancelled) {
         const { data: favs } = await supabase
           .from("wishlists")
           .select("property_id")
@@ -616,9 +627,11 @@ export function ExploreMap() {
         if (favs) setWishlist(new Set(favs.map(f => f.property_id)));
       }
 
-      setLoadingProps(false);
+      if (!cancelled) setLoadingProps(false);
     }
     load();
+
+    return () => { cancelled = true; };
   }, []);
 
   const toggleWishlist = useCallback(async (propertyId: string) => {
@@ -704,8 +717,9 @@ export function ExploreMap() {
         {/* Search controls */}
         <div className="flex flex-col lg:flex-row lg:items-start gap-2 lg:gap-3 mb-3 lg:mb-4">
           <CitySearch onPlaceSelect={handlePlaceSelect} />
-          <div className="grid grid-cols-3 lg:flex gap-2 lg:gap-3">
+          <div className="flex flex-col lg:flex-row gap-2 lg:gap-3">
             <DatePicker checkIn={checkIn} checkOut={checkOut} onDatesChange={handleDatesChange} />
+            <div className="flex gap-2 lg:gap-3">
             <GuestsPicker guests={guests} onGuestsChange={setGuests} />
             <button
               onClick={() => setShowFilters(true)}
@@ -724,6 +738,7 @@ export function ExploreMap() {
                 ) : null;
               })()}
             </button>
+            </div>
           </div>
         </div>
 
@@ -769,7 +784,7 @@ export function ExploreMap() {
           </div>
 
           {/* Right — Map */}
-          <div className="flex-1 relative rounded-xl overflow-hidden shadow-sm border border-neutral-200 min-h-[280px] lg:min-h-0 order-1 lg:order-2">
+          <div className="relative rounded-xl overflow-hidden shadow-sm border border-neutral-200 min-h-[50vh] flex-1 lg:min-h-0 order-1 lg:order-2">
             {!mapLoaded && <MapSkeleton />}
             <Map
               defaultCenter={DEFAULT_CENTER}
