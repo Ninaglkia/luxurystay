@@ -20,7 +20,7 @@ export default function Home() {
   }, [supabase]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="h-screen flex flex-col bg-white overflow-hidden">
       {/* Public header */}
       <header className="shrink-0 border-b border-neutral-200 bg-white">
         <div className="max-w-[1800px] mx-auto px-4 lg:px-6 h-16 flex items-center justify-between">
