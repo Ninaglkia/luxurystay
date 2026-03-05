@@ -123,9 +123,11 @@ export function HostDashboard() {
     const total = rawBookings.length;
     const pending = rawBookings.filter((b) => ["pending", "pending_payment"].includes(b.status)).length;
     const confirmed = rawBookings.filter((b) => ["authorized", "confirmed", "captured"].includes(b.status)).length;
-    const earnings = rawBookings
+    const HOST_COMMISSION_RATE = 0.05;
+    const grossEarnings = rawBookings
       .filter((b) => ["confirmed", "captured", "completed"].includes(b.status))
       .reduce((sum, b) => sum + (Number(b.total_price) || 0), 0);
+    const earnings = Math.round(grossEarnings * (1 - HOST_COMMISSION_RATE));
 
     setStats({ total, pending, confirmed, earnings });
     setLoading(false);
@@ -302,7 +304,7 @@ export function HostDashboard() {
           <p className="text-2xl font-bold text-emerald-600">
             &euro; {stats.earnings.toLocaleString("it-IT", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
           </p>
-          <p className="text-xs text-neutral-500 mt-1">Guadagni (confermate)</p>
+          <p className="text-xs text-neutral-500 mt-1">Guadagni netti (−5% commissione)</p>
         </div>
       </div>
 
@@ -417,9 +419,14 @@ export function HostDashboard() {
 
                   {/* Right: price + actions */}
                   <div className="flex items-center gap-3 shrink-0">
-                    <p className="text-sm font-semibold text-neutral-900">
-                      &euro;{Number(booking.total_price).toLocaleString("it-IT", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                    </p>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-neutral-900">
+                        &euro;{Math.round(Number(booking.total_price) * 0.95).toLocaleString("it-IT", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      </p>
+                      <p className="text-xs text-neutral-400">
+                        netto (−5%)
+                      </p>
+                    </div>
                     {booking.status === "pending" && (
                       <div className="flex items-center gap-2">
                         <button

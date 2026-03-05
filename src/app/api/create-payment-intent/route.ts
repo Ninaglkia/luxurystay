@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   shouldSplitPayment,
   calculateSplitAmounts,
+  calculateApplicationFee,
 } from "@/lib/payment-utils";
 
 export async function POST(request: NextRequest) {
@@ -118,18 +119,21 @@ export async function POST(request: NextRequest) {
 
     if (isSplit) {
       // Split payment: deposit with automatic capture + save card for balance
+      const depositAppFee = calculateApplicationFee(depositCents);
       const depositPI = await stripe.paymentIntents.create({
         amount: depositCents,
         currency: "eur",
         customer: customer.id,
         capture_method: "automatic",
         setup_future_usage: "off_session",
+        application_fee_amount: depositAppFee,
         description: `Acconto 30% - ${productName}`,
         metadata: {
           booking_id: booking.id,
           type: "deposit",
           total_cents: totalCents.toString(),
           balance_cents: balanceCents.toString(),
+          platform_fee_cents: depositAppFee.toString(),
         },
         statement_descriptor_suffix: "LUXURYSTAY",
       });
@@ -153,15 +157,18 @@ export async function POST(request: NextRequest) {
       clientSecret = depositPI.client_secret!;
     } else {
       // Full payment with manual capture (authorize only)
+      const fullAppFee = calculateApplicationFee(totalCents);
       const fullPI = await stripe.paymentIntents.create({
         amount: totalCents,
         currency: "eur",
         customer: customer.id,
         capture_method: "manual",
+        application_fee_amount: fullAppFee,
         description: productName,
         metadata: {
           booking_id: booking.id,
           type: "full",
+          platform_fee_cents: fullAppFee.toString(),
         },
         statement_descriptor_suffix: "LUXURYSTAY",
       });

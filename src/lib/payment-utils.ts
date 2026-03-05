@@ -1,3 +1,24 @@
+// ── Platform commission rates ──
+export const GUEST_SERVICE_FEE_RATE = 0.15; // 15% charged to guest
+export const HOST_COMMISSION_RATE = 0.05; // 5% deducted from host payout
+export const PLATFORM_TOTAL_FEE_RATE = 0.20; // 20% total kept by platform
+
+/**
+ * Calculate the Stripe application_fee_amount (in cents).
+ * This is the total platform take: 20% of the base price (subtotal).
+ * Stripe keeps this from the payment and the rest goes to the host.
+ */
+export function calculateApplicationFee(basePriceCents: number): number {
+  return Math.round(basePriceCents * PLATFORM_TOTAL_FEE_RATE);
+}
+
+/**
+ * Calculate host net earnings after 5% platform deduction.
+ */
+export function calculateHostEarnings(totalPriceCents: number): number {
+  return Math.round(totalPriceCents * (1 - HOST_COMMISSION_RATE));
+}
+
 /**
  * Check-in > 7 giorni → split payment (30% acconto + 70% saldo)
  */

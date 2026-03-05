@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { calculateApplicationFee } from "@/lib/payment-utils";
 
 function getAdminSupabase() {
   return createAdminClient(
@@ -103,6 +104,8 @@ export async function POST(request: NextRequest) {
     const origin = request.headers.get("origin") || request.nextUrl.origin;
 
     // Create Stripe Checkout Session
+    const totalCents = Math.round(total_price * 100);
+    const appFee = calculateApplicationFee(totalCents);
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
@@ -114,11 +117,17 @@ export async function POST(request: NextRequest) {
               name: property_title || property.title || "Prenotazione LuxuryStay",
               description: `${check_in} → ${check_out} · ${guests} ospite${guests > 1 ? "i" : ""}`,
             },
-            unit_amount: Math.round(total_price * 100), // Convert EUR to cents
+            unit_amount: totalCents,
           },
           quantity: 1,
         },
       ],
+      payment_intent_data: {
+        application_fee_amount: appFee,
+        metadata: {
+          platform_fee_cents: appFee.toString(),
+        },
+      },
       metadata: {
         booking_id: booking.id,
       },

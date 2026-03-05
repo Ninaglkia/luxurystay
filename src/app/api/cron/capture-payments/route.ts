@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { getAdminSupabase } from "@/lib/admin-supabase";
+import { calculateApplicationFee } from "@/lib/payment-utils";
 
 export async function GET(request: NextRequest) {
   // Verify cron secret (Vercel sends this header)
@@ -86,6 +87,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Create balance PI with off_session (using saved card)
+        const balanceAppFee = calculateApplicationFee(booking.balance_amount);
         const balancePI = await stripe.paymentIntents.create({
           amount: booking.balance_amount,
           currency: "eur",
@@ -93,10 +95,12 @@ export async function GET(request: NextRequest) {
           payment_method: paymentMethods.data[0].id,
           off_session: true,
           confirm: true,
+          application_fee_amount: balanceAppFee,
           description: `Saldo 70% - Prenotazione ${booking.id.slice(0, 8)}`,
           metadata: {
             booking_id: booking.id,
             type: "balance",
+            platform_fee_cents: balanceAppFee.toString(),
           },
           statement_descriptor_suffix: "LUXURYSTAY",
         });

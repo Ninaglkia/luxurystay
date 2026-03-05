@@ -90,7 +90,7 @@ export default function BookingPage() {
 
   const nights = calculateNights();
   const subtotal = property ? property.price * nights : 0;
-  const serviceFee = Math.round(subtotal * 0.12);
+  const serviceFee = Math.round(subtotal * 0.15);
   const insuranceFee = addInsurance ? Math.round(subtotal * 0.05) : 0;
   const total = subtotal + serviceFee + insuranceFee;
 
