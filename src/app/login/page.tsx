@@ -56,7 +56,7 @@ export default function LoginPage() {
             playsInline
             className="absolute inset-0 w-full h-full object-cover opacity-40"
           >
-            <source src="/videos/hero-villa.mp4" type="video/mp4" />
+            <source src="/videos/cinematic-villa.mp4" type="video/mp4" />
           </video>
           <div className="absolute -top-1/4 -left-1/4 w-[600px] h-[600px] rounded-full bg-amber-500/15 blur-[120px] animate-pulse" style={{ animationDuration: "8s" }} />
           <div className="absolute -bottom-1/4 -right-1/4 w-[500px] h-[500px] rounded-full bg-violet-500/10 blur-[100px] animate-pulse" style={{ animationDuration: "12s", animationDelay: "2s" }} />
