@@ -108,17 +108,17 @@ export default function LoginPage() {
       {/* Right side — login form */}
       <div className="flex-1 flex flex-col bg-white relative overflow-hidden">
         {/* Mobile video banner */}
-        <div className="lg:hidden relative h-48 overflow-hidden bg-neutral-950 shrink-0">
+        <div className="lg:hidden relative h-72 overflow-hidden bg-neutral-950 shrink-0">
           <video
             autoPlay
             muted
             loop
             playsInline
-            className="absolute inset-0 w-full h-full object-cover opacity-50"
+            className="absolute inset-0 w-full h-full object-cover opacity-70"
           >
             <source src="/videos/cinematic-villa.mp4" type="video/mp4" />
           </video>
-          <div className="absolute inset-0 bg-gradient-to-b from-neutral-950/40 to-neutral-950/80" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-neutral-950/80" />
           <div className="relative z-10 h-full flex flex-col justify-end p-6">
             <h2 className="text-white text-3xl font-light tracking-tight">
               LuxuryStay
