@@ -574,6 +574,20 @@ export default function ComeFunzionaPage() {
 
       {/* ═══ HERO ═══ */}
       <section ref={hero.ref} className="relative pt-28 pb-12 lg:pt-36 lg:pb-20 overflow-hidden" style={{ perspective: "1200px" }}>
+        {/* Video background */}
+        <div className="absolute inset-0 z-0">
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src="/videos/hero-villa.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-white/85 backdrop-blur-[2px]" />
+        </div>
+
         {/* Floating background shapes */}
         <FloatingShape delay={0} size={100} color="bg-amber-400/10" top="15%" left="8%" />
         <FloatingShape delay={1.5} size={70} color="bg-violet-400/10" top="25%" right="12%" />

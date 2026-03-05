@@ -70,16 +70,32 @@ export default function ChiSiamoPage() {
         </div>
 
         {/* Hero / Mission */}
-        <section className="max-w-5xl mx-auto px-4 lg:px-6 pt-12 pb-16 text-center">
-          <h1 className="text-4xl lg:text-5xl font-bold text-neutral-900 tracking-tight mb-6">
-            Chi Siamo
-          </h1>
-          <p className="text-lg lg:text-xl text-neutral-500 max-w-2xl mx-auto leading-relaxed">
-            LuxuryStay nasce dalla passione per l&apos;ospitalit&agrave; d&apos;eccellenza.
-            La nostra missione &egrave; connettere viaggiatori esigenti con le strutture
-            pi&ugrave; esclusive d&apos;Italia, offrendo un&apos;esperienza di prenotazione
-            semplice, trasparente e sicura.
-          </p>
+        <section className="relative overflow-hidden">
+          {/* Video background */}
+          <div className="absolute inset-0 z-0">
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover"
+            >
+              <source src="/videos/hero-villa.mp4" type="video/mp4" />
+            </video>
+            <div className="absolute inset-0 bg-neutral-950/70" />
+          </div>
+
+          <div className="relative z-10 max-w-5xl mx-auto px-4 lg:px-6 pt-20 pb-24 text-center">
+            <h1 className="text-4xl lg:text-5xl font-bold text-white tracking-tight mb-6">
+              Chi Siamo
+            </h1>
+            <p className="text-lg lg:text-xl text-neutral-300 max-w-2xl mx-auto leading-relaxed">
+              LuxuryStay nasce dalla passione per l&apos;ospitalit&agrave; d&apos;eccellenza.
+              La nostra missione &egrave; connettere viaggiatori esigenti con le strutture
+              pi&ugrave; esclusive d&apos;Italia, offrendo un&apos;esperienza di prenotazione
+              semplice, trasparente e sicura.
+            </p>
+          </div>
         </section>
 
         {/* Valori */}

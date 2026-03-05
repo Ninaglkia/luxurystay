@@ -49,13 +49,15 @@ export default function LoginPage() {
       {/* Left side — animated branding */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-end p-12 bg-neutral-950">
         <div className="absolute inset-0">
-          <div
-            className="absolute inset-0 bg-cover bg-center opacity-30"
-            style={{
-              backgroundImage:
-                "url('https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2000&auto=format&fit=crop')",
-            }}
-          />
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover opacity-40"
+          >
+            <source src="/videos/hero-villa.mp4" type="video/mp4" />
+          </video>
           <div className="absolute -top-1/4 -left-1/4 w-[600px] h-[600px] rounded-full bg-amber-500/15 blur-[120px] animate-pulse" style={{ animationDuration: "8s" }} />
           <div className="absolute -bottom-1/4 -right-1/4 w-[500px] h-[500px] rounded-full bg-violet-500/10 blur-[100px] animate-pulse" style={{ animationDuration: "12s", animationDelay: "2s" }} />
           <div className="absolute top-1/3 right-1/4 w-[300px] h-[300px] rounded-full bg-emerald-500/8 blur-[80px] animate-pulse" style={{ animationDuration: "10s", animationDelay: "4s" }} />
