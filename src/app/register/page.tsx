@@ -110,11 +110,31 @@ export default function RegisterPage() {
       </div>
 
       {/* Right side — register form */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-white">
+      <div className="flex-1 flex flex-col bg-white">
+        {/* Mobile video banner */}
+        <div className="lg:hidden relative h-48 overflow-hidden bg-neutral-950 shrink-0">
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover opacity-50"
+          >
+            <source src="/videos/drone-villa.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-b from-neutral-950/40 to-neutral-950/80" />
+          <div className="relative z-10 h-full flex flex-col justify-end p-6">
+            <h2 className="text-white text-3xl font-light tracking-tight">
+              LuxuryStay
+            </h2>
+            <p className="text-white/60 text-sm mt-1">
+              Crea il tuo account e inizia a esplorare.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm">
-          <h2 className="lg:hidden text-2xl font-light tracking-tight text-neutral-900 mb-2">
-            LuxuryStay
-          </h2>
 
           <h3 className="text-2xl font-semibold text-neutral-900 mb-1">
             Crea un account
@@ -225,6 +245,7 @@ export default function RegisterPage() {
               Accedi
             </Link>
           </p>
+        </div>
         </div>
       </div>
     </div>
