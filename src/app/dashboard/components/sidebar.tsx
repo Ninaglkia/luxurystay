@@ -8,6 +8,7 @@ import { useMode } from "./mode-context";
 interface SidebarProps {
   userName: string;
   avatarUrl: string | null;
+  userEmail?: string;
 }
 
 const navItems = [
@@ -58,7 +59,7 @@ function getInitials(name: string) {
     .slice(0, 2);
 }
 
-export function Sidebar({ userName, avatarUrl }: SidebarProps) {
+export function Sidebar({ userName, avatarUrl, userEmail }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -79,25 +80,27 @@ export function Sidebar({ userName, avatarUrl }: SidebarProps) {
         </Link>
       </div>
 
-      {/* User name — clickable → profile dashboard */}
+      {/* User profile — clickable */}
       <Link
         href="/dashboard/settings"
-        className="flex items-center gap-3 mx-3 mt-4 mb-2 px-3 py-2.5 rounded-lg hover:bg-neutral-100 transition-colors group"
+        className="flex items-center gap-3 mx-3 mt-4 mb-2 px-3 py-3 rounded-xl hover:bg-neutral-50 transition-all group"
       >
         {avatarUrl ? (
           <img
             src={avatarUrl}
             alt={userName}
-            className="w-9 h-9 rounded-full object-cover shrink-0"
+            className="w-11 h-11 rounded-full object-cover shrink-0 ring-2 ring-neutral-100 group-hover:ring-neutral-200 transition-all"
           />
         ) : (
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shrink-0">
-            <span className="text-xs font-bold text-white">{getInitials(userName)}</span>
+          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shrink-0 ring-2 ring-amber-100 group-hover:ring-amber-200 transition-all">
+            <span className="text-sm font-bold text-white">{getInitials(userName)}</span>
           </div>
         )}
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-neutral-900 truncate">{userName}</p>
-          <p className="text-xs text-neutral-400 group-hover:text-neutral-500 transition-colors">Vedi profilo</p>
+          {userEmail && (
+            <p className="text-xs text-neutral-400 truncate group-hover:text-neutral-500 transition-colors">{userEmail}</p>
+          )}
         </div>
       </Link>
 
@@ -157,19 +160,27 @@ export function Sidebar({ userName, avatarUrl }: SidebarProps) {
             item.href === "/dashboard"
               ? pathname === "/dashboard"
               : pathname.startsWith(item.href);
+          const isMessages = item.href === "/dashboard/messages";
 
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                 isActive
-                  ? "bg-neutral-900 text-white"
-                  : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+                  ? "bg-neutral-900 text-white shadow-sm"
+                  : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 hover:translate-x-0.5"
               }`}
             >
               {item.icon}
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {isMessages && (
+                <span className={`min-w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold ${
+                  isActive ? "bg-white/20 text-white" : "bg-neutral-200 text-neutral-500"
+                }`}>
+                  0
+                </span>
+              )}
             </Link>
           );
         })}
