@@ -348,7 +348,10 @@ export function HostDashboard() {
                     <p className="text-sm text-neutral-500">
                       {property.guests} ospiti &middot; {property.bedrooms} camere &middot; {property.beds} letti
                     </p>
-                    <p className="text-sm font-semibold text-neutral-900">&euro;{property.price}<span className="text-neutral-400 font-normal">/notte</span></p>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-neutral-900">&euro;{property.price}<span className="text-neutral-400 font-normal">/notte</span></p>
+                      <p className="text-xs text-emerald-600 font-medium">&euro;{Math.round(property.price * 0.95)} netto/notte</p>
+                    </div>
                   </div>
                 </div>
               </div>
