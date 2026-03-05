@@ -124,7 +124,7 @@ function FiltersPanel({ filters, onChange, onClose, resultCount }: {
                 <input type="number" min={0} step={10} value={local.priceMin || ""}
                   onChange={e => setLocal(p => ({ ...p, priceMin: Number(e.target.value) || 0 }))}
                   placeholder="0"
-                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-900 focus:ring-1 focus:ring-neutral-900 focus:border-neutral-900 outline-none" />
+                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 min-h-[44px] text-sm text-neutral-900 focus:ring-1 focus:ring-neutral-900 focus:border-neutral-900 outline-none" />
               </div>
               <span className="text-neutral-400 mt-5">&mdash;</span>
               <div className="flex-1">
@@ -132,7 +132,7 @@ function FiltersPanel({ filters, onChange, onClose, resultCount }: {
                 <input type="number" min={0} step={10} value={local.priceMax >= 10000 ? "" : local.priceMax}
                   onChange={e => setLocal(p => ({ ...p, priceMax: Number(e.target.value) || 10000 }))}
                   placeholder="Qualsiasi"
-                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-900 focus:ring-1 focus:ring-neutral-900 focus:border-neutral-900 outline-none" />
+                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 min-h-[44px] text-sm text-neutral-900 focus:ring-1 focus:ring-neutral-900 focus:border-neutral-900 outline-none" />
               </div>
             </div>
             {/* Quick price buttons */}
@@ -170,7 +170,7 @@ function FiltersPanel({ filters, onChange, onClose, resultCount }: {
               <div className="flex items-center gap-2">
                 {[0, 1, 2, 3, 4].map(n => (
                   <button key={n} onClick={() => setLocal(p => ({ ...p, bedroomsMin: n }))}
-                    className={`w-10 h-10 rounded-full text-sm font-medium border transition-colors cursor-pointer ${
+                    className={`w-11 h-11 min-w-[44px] min-h-[44px] rounded-full text-sm font-medium border transition-colors cursor-pointer ${
                       local.bedroomsMin === n ? "bg-neutral-900 text-white border-neutral-900" : "bg-white text-neutral-700 border-neutral-300 hover:border-neutral-400"
                     }`}>
                     {n === 0 ? "–" : n + "+"}
@@ -183,7 +183,7 @@ function FiltersPanel({ filters, onChange, onClose, resultCount }: {
               <div className="flex items-center gap-2">
                 {[0, 2, 4, 6, 8].map(n => (
                   <button key={n} onClick={() => setLocal(p => ({ ...p, guestsMin: n }))}
-                    className={`w-10 h-10 rounded-full text-sm font-medium border transition-colors cursor-pointer ${
+                    className={`w-11 h-11 min-w-[44px] min-h-[44px] rounded-full text-sm font-medium border transition-colors cursor-pointer ${
                       local.guestsMin === n ? "bg-neutral-900 text-white border-neutral-900" : "bg-white text-neutral-700 border-neutral-300 hover:border-neutral-400"
                     }`}>
                     {n === 0 ? "–" : n + "+"}
@@ -199,7 +199,7 @@ function FiltersPanel({ filters, onChange, onClose, resultCount }: {
             <div className="grid grid-cols-2 gap-2">
               {FILTER_AMENITIES.map(a => (
                 <button key={a.value} onClick={() => toggleAmenity(a.value)}
-                  className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium border transition-colors cursor-pointer ${
+                  className={`flex items-center gap-2 px-3.5 py-2.5 min-h-[44px] rounded-xl text-sm font-medium border transition-colors cursor-pointer ${
                     local.amenities.includes(a.value) ? "bg-neutral-900 text-white border-neutral-900" : "bg-white text-neutral-700 border-neutral-300 hover:border-neutral-400"
                   }`}>
                   {a.label}
@@ -211,11 +211,11 @@ function FiltersPanel({ filters, onChange, onClose, resultCount }: {
 
         {/* Footer */}
         <div className="sticky bottom-0 bg-white border-t border-neutral-200 px-5 py-4 flex items-center justify-between">
-          <button onClick={handleReset} className="text-sm font-medium text-neutral-700 underline cursor-pointer">
+          <button onClick={handleReset} className="text-sm font-medium text-neutral-700 underline cursor-pointer min-h-[44px]">
             Cancella tutto
           </button>
           <button onClick={handleApply}
-            className="px-6 py-3 bg-neutral-900 text-white rounded-lg text-sm font-semibold hover:bg-neutral-800 transition-colors cursor-pointer">
+            className="px-6 py-3 min-h-[44px] bg-neutral-900 text-white rounded-lg text-sm font-semibold hover:bg-neutral-800 transition-colors cursor-pointer">
             Mostra {resultCount} alloggi
           </button>
         </div>
@@ -524,7 +524,7 @@ function PropertyCard({ property, isFav, onToggleFav }: {
         {/* Favorite heart */}
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFav(property.id); }}
-          className="absolute top-2.5 right-2.5 w-8 h-8 flex items-center justify-center cursor-pointer active:scale-90 transition-transform"
+          className="absolute top-2 right-2 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer active:scale-90 transition-transform"
         >
           <svg className={`w-6 h-6 drop-shadow-md transition-colors ${isFav ? "text-red-500 fill-red-500" : "text-white"}`}
             fill={isFav ? "currentColor" : "none"} viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
@@ -713,22 +713,22 @@ export function ExploreMap() {
 
   return (
     <APIProvider apiKey={GOOGLE_MAPS_API_KEY} libraries={["places", "marker"]}>
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 flex flex-col lg:min-h-0">
         {/* Search controls */}
         <div className="flex flex-col lg:flex-row lg:items-start gap-2 lg:gap-3 mb-3 lg:mb-4">
           <CitySearch onPlaceSelect={handlePlaceSelect} />
-          <div className="flex flex-col lg:flex-row gap-2 lg:gap-3">
+          <div className="flex flex-col lg:flex-row gap-2 lg:gap-3 w-full lg:w-auto">
             <DatePicker checkIn={checkIn} checkOut={checkOut} onDatesChange={handleDatesChange} />
-            <div className="flex gap-2 lg:gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 lg:gap-3">
             <GuestsPicker guests={guests} onGuestsChange={setGuests} />
             <button
               onClick={() => setShowFilters(true)}
-              className="relative flex items-center justify-center gap-2 h-11 px-4 bg-white border border-neutral-300 rounded-xl text-sm font-medium text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50 transition-colors cursor-pointer"
+              className="relative flex items-center justify-center gap-2 min-h-[44px] h-11 w-full sm:w-auto px-4 bg-white border border-neutral-300 rounded-xl text-sm font-medium text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50 transition-colors cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
               </svg>
-              <span className="hidden sm:inline">Filtri</span>
+              <span>Filtri</span>
               {(() => {
                 const count = (filters.priceMin > 0 ? 1 : 0) + (filters.priceMax < 10000 ? 1 : 0) + (filters.category ? 1 : 0) + (filters.bedroomsMin > 0 ? 1 : 0) + (filters.guestsMin > 0 ? 1 : 0) + filters.amenities.length;
                 return count > 0 ? (
@@ -743,9 +743,9 @@ export function ExploreMap() {
         </div>
 
         {/* Split layout: list left + map right */}
-        <div className="flex-1 flex flex-col lg:flex-row gap-4 min-h-0">
+        <div className="flex-1 flex flex-col lg:flex-row gap-4 lg:min-h-0">
           {/* Left — Property list */}
-          <div className="lg:w-[55%] xl:w-[50%] shrink-0 overflow-y-auto lg:pr-2 order-2 lg:order-1">
+          <div className="lg:w-[55%] xl:w-[50%] shrink-0 lg:overflow-y-auto lg:pr-2">
             {/* Header */}
             <div className="mb-4">
               {loadingProps ? (
@@ -763,11 +763,11 @@ export function ExploreMap() {
 
             {/* Cards grid */}
             {loadingProps ? (
-              <div className="grid grid-cols-2 gap-x-5 gap-y-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-8">
                 {[1, 2, 3, 4].map(i => <CardSkeleton key={i} />)}
               </div>
             ) : visibleProperties.length > 0 ? (
-              <div className="grid grid-cols-2 gap-x-5 gap-y-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-8">
                 {visibleProperties.map((prop) => (
                   <PropertyCard key={prop.id} property={prop} isFav={wishlist.has(prop.id)} onToggleFav={toggleWishlist} />
                 ))}
@@ -784,7 +784,7 @@ export function ExploreMap() {
           </div>
 
           {/* Right — Map */}
-          <div className="relative rounded-xl overflow-hidden shadow-sm border border-neutral-200 min-h-[50vh] flex-1 lg:min-h-0 order-1 lg:order-2">
+          <div className="relative rounded-xl overflow-hidden shadow-sm border border-neutral-200 h-[60vh] lg:h-auto flex-1 lg:min-h-0">
             {!mapLoaded && <MapSkeleton />}
             <Map
               defaultCenter={DEFAULT_CENTER}

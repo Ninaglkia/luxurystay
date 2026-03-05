@@ -20,7 +20,7 @@ export default function Home() {
   }, [supabase]);
 
   return (
-    <div className="h-screen flex flex-col bg-white overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-white">
       {/* Public header */}
       <header className="shrink-0 border-b border-neutral-200 bg-white">
         <div className="max-w-[1800px] mx-auto px-4 lg:px-6 h-16 flex items-center justify-between">
@@ -36,33 +36,33 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <Link
               href="/come-funziona"
-              className="px-4 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors hidden sm:block"
+              className="px-4 py-2 min-h-[44px] flex items-center text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors hidden sm:flex"
             >
               Come funziona
             </Link>
             {loading ? (
-              <div className="w-24 h-9 bg-neutral-100 rounded-lg animate-pulse" />
+              <div className="w-24 h-11 bg-neutral-100 rounded-lg animate-pulse" />
             ) : user ? (
               <Link
                 href="/dashboard"
-                className="flex items-center gap-2 bg-neutral-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-neutral-800 transition-colors"
+                className="flex items-center gap-2 bg-neutral-900 text-white px-4 py-2 min-h-[44px] rounded-lg text-sm font-medium hover:bg-neutral-800 transition-colors"
               >
                 <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-xs font-semibold">
                   {user.user_metadata?.full_name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || "U"}
                 </div>
-                Dashboard
+                <span className="hidden sm:inline">Dashboard</span>
               </Link>
             ) : (
               <>
                 <Link
                   href="/login"
-                  className="px-4 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors"
+                  className="px-4 py-2 min-h-[44px] flex items-center text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors"
                 >
                   Accedi
                 </Link>
                 <Link
                   href="/register"
-                  className="px-4 py-2 bg-neutral-900 text-white text-sm font-medium rounded-lg hover:bg-neutral-800 transition-colors"
+                  className="px-4 py-2 min-h-[44px] flex items-center bg-neutral-900 text-white text-sm font-medium rounded-lg hover:bg-neutral-800 transition-colors"
                 >
                   Registrati
                 </Link>
@@ -73,7 +73,7 @@ export default function Home() {
       </header>
 
       {/* Map + Properties */}
-      <main className="flex-1 flex flex-col min-h-0 p-4 lg:p-6">
+      <main className="flex-1 flex flex-col p-4 lg:p-6">
         <ExploreMap />
       </main>
 

@@ -219,7 +219,7 @@ export function DatePicker({ checkIn, checkOut, onDatesChange }: DatePickerProps
       {/* Mobile trigger */}
       <button
         onClick={() => { setIsOpen(true); setSelecting(checkIn && !checkOut ? "checkOut" : "checkIn"); }}
-        className="lg:hidden w-full text-left px-4 py-2.5 border border-neutral-200 rounded-xl bg-white shadow-sm active:bg-neutral-50 cursor-pointer"
+        className="lg:hidden w-full text-left px-4 py-2.5 min-h-[44px] border border-neutral-200 rounded-xl bg-white shadow-sm active:bg-neutral-50 cursor-pointer"
       >
         <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Date</p>
         <p className={`text-sm mt-0.5 ${checkIn ? "text-neutral-900 font-semibold" : "text-neutral-400"}`}>
