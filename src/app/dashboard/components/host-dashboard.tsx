@@ -1,8 +1,44 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+
+// 3D tilt card component
+function Tilt3DCard({ children, className = "", intensity = 8 }: { children: React.ReactNode; className?: string; intensity?: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -intensity;
+    const rotateY = ((x - centerX) / centerX) * intensity;
+    el.style.transform = `perspective(600px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+  }
+
+  function handleMouseLeave() {
+    const el = ref.current;
+    if (!el) return;
+    el.style.transform = "perspective(600px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)";
+  }
+
+  return (
+    <div
+      ref={ref}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className={className}
+      style={{ transition: "transform 0.15s ease-out", transformStyle: "preserve-3d", willChange: "transform" }}
+    >
+      {children}
+    </div>
+  );
+}
 
 interface Property {
   id: string;
@@ -249,7 +285,7 @@ export function HostDashboard() {
   if (properties.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center py-20">
-        <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-rose-50 to-orange-50 flex items-center justify-center mb-6">
+        <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-rose-50 to-orange-50 flex items-center justify-center mb-6 animate-[float_3s_ease-in-out_infinite]" style={{ animation: "float 3s ease-in-out infinite" }}>
           <svg className="w-12 h-12 text-rose-400" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
           </svg>
@@ -307,7 +343,7 @@ export function HostDashboard() {
             valueColor: "text-emerald-600",
           },
         ].map((stat, i) => (
-          <div key={i} className="bg-white rounded-2xl border border-neutral-100 p-4 flex items-start gap-3">
+          <Tilt3DCard key={i} className="bg-white rounded-2xl border border-neutral-100 p-4 flex items-start gap-3 shadow-sm hover:shadow-md">
             <div className={`w-10 h-10 rounded-xl ${stat.iconBg} flex items-center justify-center shrink-0`}>
               <svg className={`w-5 h-5 ${stat.iconColor}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d={stat.icon} />
@@ -317,7 +353,7 @@ export function HostDashboard() {
               <p className={`text-xl font-bold ${stat.valueColor || "text-neutral-900"}`}>{stat.value}</p>
               <p className="text-xs text-neutral-500">{stat.label}</p>
             </div>
-          </div>
+          </Tilt3DCard>
         ))}
       </div>
 
@@ -349,7 +385,7 @@ export function HostDashboard() {
                 <div className="p-4 lg:p-5">
                   <div className="flex gap-4">
                     {/* Photo */}
-                    <div className="w-24 h-24 lg:w-36 lg:h-28 rounded-xl overflow-hidden bg-neutral-100 shrink-0">
+                    <Tilt3DCard intensity={12} className="w-24 h-24 lg:w-36 lg:h-28 rounded-xl overflow-hidden bg-neutral-100 shrink-0">
                       {property.photos[0] ? (
                         <img src={property.photos[0]} alt={property.title} className="w-full h-full object-cover" />
                       ) : (
@@ -359,7 +395,7 @@ export function HostDashboard() {
                           </svg>
                         </div>
                       )}
-                    </div>
+                    </Tilt3DCard>
 
                     {/* Info */}
                     <div className="flex-1 min-w-0 flex flex-col justify-between">
