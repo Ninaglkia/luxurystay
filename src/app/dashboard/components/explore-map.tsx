@@ -341,7 +341,7 @@ function MyLocationButton() {
 
 /* ═══════════════ 3D Markers ═══════════════ */
 
-function PropertyMarkers({ properties }: { properties: MapProperty[] }) {
+function PropertyMarkers({ properties, dateParams }: { properties: MapProperty[]; dateParams?: string }) {
   const map = useMap();
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const overlayRef = useRef<HTMLDivElement | null>(null);
@@ -431,7 +431,7 @@ function PropertyMarkers({ properties }: { properties: MapProperty[] }) {
         });
 
         el.addEventListener("click", () => {
-          window.location.href = `/property/${prop.id}`;
+          window.location.href = dateParams ? `/property/${prop.id}?${dateParams}` : `/property/${prop.id}`;
         });
 
         markersRef.current.push(marker);
@@ -502,13 +502,15 @@ function BoundsWatcher({ onBoundsChange }: { onBoundsChange: (b: Bounds) => void
 
 /* ═══════════════ Property card for list ═══════════════ */
 
-function PropertyCard({ property, isFav, onToggleFav }: {
+function PropertyCard({ property, isFav, onToggleFav, dateParams }: {
   property: MapProperty;
   isFav: boolean;
   onToggleFav: (id: string) => void;
+  dateParams?: string;
 }) {
+  const href = dateParams ? `/property/${property.id}?${dateParams}` : `/property/${property.id}`;
   return (
-    <Link href={`/property/${property.id}`} className="group block">
+    <Link href={href} className="group block">
       {/* Photo */}
       <div className="aspect-[4/3] rounded-xl overflow-hidden bg-neutral-100 mb-2.5 relative">
         {property.photos[0] ? (
@@ -633,6 +635,15 @@ export function ExploreMap() {
 
     return () => { cancelled = true; };
   }, []);
+
+  function buildDateParams(): string {
+    const params = new URLSearchParams();
+    if (checkIn) params.set("checkin", checkIn.toISOString().split("T")[0]);
+    if (checkOut) params.set("checkout", checkOut.toISOString().split("T")[0]);
+    return params.toString();
+  }
+
+  const dateParams = buildDateParams();
 
   const toggleWishlist = useCallback(async (propertyId: string) => {
     const supabase = createClient();
@@ -769,7 +780,7 @@ export function ExploreMap() {
             ) : visibleProperties.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-8">
                 {visibleProperties.map((prop) => (
-                  <PropertyCard key={prop.id} property={prop} isFav={wishlist.has(prop.id)} onToggleFav={toggleWishlist} />
+                  <PropertyCard key={prop.id} property={prop} isFav={wishlist.has(prop.id)} onToggleFav={toggleWishlist} dateParams={dateParams} />
                 ))}
               </div>
             ) : bounds ? (
@@ -800,7 +811,7 @@ export function ExploreMap() {
               onTilesLoaded={() => setMapLoaded(true)}
             />
             <UserLocationDot />
-            <PropertyMarkers properties={visibleProperties} />
+            <PropertyMarkers properties={visibleProperties} dateParams={dateParams} />
             <BoundsWatcher onBoundsChange={handleBoundsChange} />
             <MapController target={target} />
             <MyLocationButton />

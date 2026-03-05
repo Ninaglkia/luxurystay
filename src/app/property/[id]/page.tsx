@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { APIProvider, Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 import type { User } from "@supabase/supabase-js";
@@ -482,6 +482,7 @@ function Lightbox({
 export default function PropertyPage() {
   const { id } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const [property, setProperty] = useState<Property | null>(null);
   const [host, setHost] = useState<HostProfile | null>(null);
@@ -493,10 +494,10 @@ export default function PropertyPage() {
   // Lightbox
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-  // Booking widget
-  const [checkIn, setCheckIn] = useState("");
-  const [checkOut, setCheckOut] = useState("");
-  const [guestCount, setGuestCount] = useState(1);
+  // Booking widget — pre-fill from URL params if available
+  const [checkIn, setCheckIn] = useState(searchParams.get("checkin") || "");
+  const [checkOut, setCheckOut] = useState(searchParams.get("checkout") || "");
+  const [guestCount, setGuestCount] = useState(Number(searchParams.get("guests")) || 1);
 
   // Booked dates (fetched from Supabase)
   const [bookedDates, setBookedDates] = useState<Set<string>>(new Set());
