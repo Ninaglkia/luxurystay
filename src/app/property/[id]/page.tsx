@@ -713,7 +713,7 @@ export default function PropertyPage() {
 
   const nights = calculateNights();
   const subtotal = property ? property.price * nights : 0;
-  const serviceFee = Math.round(subtotal * 0.12);
+  const serviceFee = Math.round(subtotal * 0.15);
   const total = subtotal + serviceFee;
 
   // Extract city from address
