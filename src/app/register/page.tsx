@@ -90,13 +90,15 @@ export default function RegisterPage() {
     <div className="min-h-screen flex">
       {/* Left side — branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-neutral-900 relative overflow-hidden items-end p-12">
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-40"
-          style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1582719508461-905c673771fd?q=80&w=2000&auto=format&fit=crop')",
-          }}
-        />
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover opacity-40"
+        >
+          <source src="/videos/drone-villa.mp4" type="video/mp4" />
+        </video>
         <div className="relative z-10">
           <h1 className="text-white text-5xl font-light tracking-tight mb-4">
             LuxuryStay
