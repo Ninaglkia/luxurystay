@@ -1,28 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import {
-  CalendarCheck,
-  Heart,
-  MessageCircle,
-  Plane,
-  Search,
-  MapPin,
-  TrendingUp,
-  TrendingDown,
-  Home,
-  Euro,
-  Users,
-  ArrowRight,
-  BarChart3,
-} from "lucide-react";
+import { MapPin, Search, ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useMode } from "./components/mode-context";
-import { HostDashboard } from "./components/host-dashboard";
 
-interface BookingPreview {
+/* ═══════════════ Types ═══════════════ */
+
+interface GuestBooking {
   id: string;
   property_id: string;
   check_in: string;
@@ -30,18 +17,34 @@ interface BookingPreview {
   guests: number;
   total_price: number;
   status: string;
-  property_title?: string;
-  property_photo?: string;
-  property_address?: string;
-  created_at?: string;
+  created_at: string;
+  property_title: string;
+  property_photo: string | null;
 }
 
-const fadeSlide = {
+interface HostBooking {
+  id: string;
+  property_id: string;
+  guest_id: string;
+  check_in: string;
+  check_out: string;
+  guests: number;
+  total_price: number;
+  status: string;
+  created_at: string;
+  property_title: string;
+  guest_name: string;
+  guest_avatar: string | null;
+}
+
+/* ═══════════════ Helpers ═══════════════ */
+
+const fadeUp = {
   hidden: { opacity: 0, y: 16 },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.08, duration: 0.4, ease: "easeOut" as const },
+    transition: { delay: i * 0.06, duration: 0.35, ease: "easeOut" as const },
   }),
 };
 
@@ -50,170 +53,88 @@ function formatDateIT(dateStr: string): string {
   return d.toLocaleDateString("it-IT", { day: "numeric", month: "short" });
 }
 
-function getTodayFormatted(): string {
-  return new Date().toLocaleDateString("it-IT", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+function todayStr(): string {
+  return new Date().toISOString().split("T")[0];
 }
 
-/* ═══════════════ Stat Card ═══════════════ */
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  iconBg,
-  iconColor,
-  trend,
-  index,
-}: {
-  label: string;
-  value: string | number;
-  icon: React.ElementType;
-  iconBg: string;
-  iconColor: string;
-  trend?: { value: string; positive: boolean };
-  index: number;
-}) {
+/* ═══════════════ Status Badge ═══════════════ */
+
+function StatusBadge({ status }: { status: string }) {
+  const config: Record<string, { bg: string; text: string; label: string }> = {
+    confirmed: { bg: "bg-emerald-50", text: "text-emerald-600", label: "Confermata" },
+    authorized: { bg: "bg-emerald-50", text: "text-emerald-600", label: "Confermata" },
+    captured: { bg: "bg-emerald-50", text: "text-emerald-600", label: "Confermata" },
+    pending: { bg: "bg-amber-50", text: "text-amber-600", label: "In attesa" },
+    pending_payment: { bg: "bg-amber-50", text: "text-amber-600", label: "In attesa" },
+    cancelled: { bg: "bg-red-50", text: "text-red-500", label: "Cancellata" },
+    completed: { bg: "bg-neutral-100", text: "text-neutral-600", label: "Completata" },
+  };
+  const c = config[status] || config.pending;
   return (
-    <motion.div custom={index} initial="hidden" animate="visible" variants={fadeSlide}>
-      <div className="bg-white rounded-2xl border border-neutral-100 p-5 hover:shadow-md transition-all group">
-        <div className="flex items-start justify-between mb-4">
-          <div className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center`}>
-            <Icon className={`w-5 h-5 ${iconColor}`} strokeWidth={1.5} />
-          </div>
-          {trend && (
-            <div
-              className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
-                trend.positive
-                  ? "bg-emerald-50 text-emerald-600"
-                  : "bg-red-50 text-red-500"
-              }`}
-            >
-              {trend.positive ? (
-                <TrendingUp className="w-3 h-3" />
-              ) : (
-                <TrendingDown className="w-3 h-3" />
-              )}
-              {trend.value}
-            </div>
-          )}
-        </div>
-        <p className="text-2xl font-bold text-neutral-900">{value}</p>
-        <p className="text-sm text-neutral-500 mt-0.5">{label}</p>
-      </div>
-    </motion.div>
+    <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${c.bg} ${c.text}`}>
+      {c.label}
+    </span>
   );
 }
 
-/* ═══════════════ Mini Bar Chart ═══════════════ */
-function MiniBarChart({ data }: { data: { label: string; value: number }[] }) {
-  const max = Math.max(...data.map((d) => d.value), 1);
+/* ═══════════════ Filter Chips ═══════════════ */
+
+function FilterChips({
+  filters,
+  active,
+  onChange,
+}: {
+  filters: string[];
+  active: string;
+  onChange: (f: string) => void;
+}) {
   return (
-    <div className="flex items-end gap-2 h-36">
-      {data.map((d, i) => (
-        <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
-          <div className="w-full relative flex flex-col justify-end h-28">
-            <motion.div
-              className="w-full rounded-t-md bg-gradient-to-t from-violet-500 to-violet-400"
-              initial={{ height: 0 }}
-              animate={{ height: `${(d.value / max) * 100}%` }}
-              transition={{ delay: 0.3 + i * 0.08, duration: 0.5, ease: "easeOut" }}
-            />
-          </div>
-          <span className="text-[10px] text-neutral-400 font-medium">{d.label}</span>
-        </div>
+    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+      {filters.map((f) => (
+        <button
+          key={f}
+          onClick={() => onChange(f)}
+          className={`shrink-0 px-4 py-2 text-sm rounded-full transition-colors ${
+            active === f
+              ? "bg-neutral-900 text-white"
+              : "bg-white border border-neutral-200 text-neutral-600"
+          }`}
+        >
+          {f}
+        </button>
       ))}
     </div>
   );
 }
 
-/* ═══════════════ Donut Chart ═══════════════ */
-function DonutChart({
-  segments,
-  centerLabel,
-  centerValue,
-}: {
-  segments: { label: string; value: number; color: string }[];
-  centerLabel: string;
-  centerValue: string | number;
-}) {
-  const total = segments.reduce((s, seg) => s + seg.value, 0) || 1;
-  let cumulative = 0;
-  const radius = 42;
-  const circumference = 2 * Math.PI * radius;
+/* ═══════════════ Loading Skeleton ═══════════════ */
 
+function LoadingSkeleton() {
   return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="relative w-32 h-32">
-        <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-          {segments.map((seg, i) => {
-            const pct = seg.value / total;
-            const offset = cumulative * circumference;
-            cumulative += pct;
-            return (
-              <circle
-                key={i}
-                cx="50"
-                cy="50"
-                r={radius}
-                fill="none"
-                stroke={seg.color}
-                strokeWidth="12"
-                strokeDasharray={`${pct * circumference} ${circumference}`}
-                strokeDashoffset={-offset}
-                strokeLinecap="round"
-                className="transition-all duration-700"
-              />
-            );
-          })}
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold text-neutral-900">{centerValue}</span>
-          <span className="text-[10px] text-neutral-400">{centerLabel}</span>
-        </div>
+    <div className="space-y-4">
+      <div className="h-8 w-48 bg-neutral-100 rounded-lg animate-pulse" />
+      <div className="flex gap-2">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-10 w-24 bg-neutral-100 rounded-full animate-pulse" />
+        ))}
       </div>
-      <div className="flex flex-wrap gap-3 justify-center">
-        {segments.map((seg, i) => (
-          <div key={i} className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: seg.color }} />
-            <span className="text-xs text-neutral-500">{seg.label}</span>
-          </div>
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-24 bg-neutral-100 rounded-2xl animate-pulse" />
         ))}
       </div>
     </div>
   );
 }
 
-/* ═══════════════ Status Badge ═══════════════ */
-function StatusBadge({ status }: { status: string }) {
-  const config: Record<string, { bg: string; text: string; label: string }> = {
-    confirmed: { bg: "bg-emerald-50", text: "text-emerald-600", label: "Confermata" },
-    authorized: { bg: "bg-blue-50", text: "text-blue-600", label: "Autorizzata" },
-    captured: { bg: "bg-violet-50", text: "text-violet-600", label: "Completata" },
-    cancelled: { bg: "bg-red-50", text: "text-red-500", label: "Cancellata" },
-    pending: { bg: "bg-amber-50", text: "text-amber-600", label: "In attesa" },
-  };
-  const c = config[status] || config.pending;
-  return (
-    <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${c.bg} ${c.text}`}>
-      {c.label}
-    </span>
-  );
-}
+/* ═══════════════ Guest: I miei soggiorni ═══════════════ */
 
-/* ═══════════════ Guest Dashboard ═══════════════ */
-function GuestDashboard() {
+const GUEST_FILTERS = ["Tutti", "In arrivo", "In corso", "Completati", "Cancellati"];
+
+function GuestSoggiorni() {
   const supabase = createClient();
-  const [userName, setUserName] = useState("");
-  const [activeBookings, setActiveBookings] = useState(0);
-  const [totalSpent, setTotalSpent] = useState(0);
-  const [totalGuests, setTotalGuests] = useState(0);
-  const [upcomingTrips, setUpcomingTrips] = useState<BookingPreview[]>([]);
-  const [recentBookings, setRecentBookings] = useState<BookingPreview[]>([]);
-  const [monthlyData, setMonthlyData] = useState<{ label: string; value: number }[]>([]);
+  const [bookings, setBookings] = useState<GuestBooking[]>([]);
+  const [filter, setFilter] = useState("Tutti");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -221,414 +142,393 @@ function GuestDashboard() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
-      setUserName(
-        user.user_metadata?.full_name?.split(" ")[0] ||
-          user.email?.split("@")[0] ||
-          ""
-      );
-
-      // Fetch all bookings
-      const { data: bookings } = await supabase
+      const { data: rawBookings } = await supabase
         .from("bookings")
         .select("id, property_id, check_in, check_out, guests, total_price, status, created_at")
         .eq("guest_id", user.id)
         .order("created_at", { ascending: false });
 
-      const allBookings = bookings || [];
-      const active = allBookings.filter((b) =>
-        ["confirmed", "authorized", "captured"].includes(b.status)
-      );
-      setActiveBookings(active.length);
-      setTotalSpent(active.reduce((s, b) => s + Number(b.total_price), 0));
-      setTotalGuests(active.reduce((s, b) => s + b.guests, 0));
-
-      // Monthly spending (last 6 months)
-      const months = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
-      const now = new Date();
-      const monthlyMap: Record<string, number> = {};
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-        monthlyMap[key] = 0;
-      }
-      active.forEach((b) => {
-        const key = b.created_at?.slice(0, 7);
-        if (key && key in monthlyMap) {
-          monthlyMap[key] += Number(b.total_price);
-        }
-      });
-      setMonthlyData(
-        Object.entries(monthlyMap).map(([key, value]) => ({
-          label: months[parseInt(key.split("-")[1]) - 1],
-          value,
-        }))
-      );
-
-      // Upcoming trips
-      const today = new Date().toISOString().split("T")[0];
-      const upcoming = active
-        .filter((b) => b.check_in >= today)
-        .sort((a, b) => a.check_in.localeCompare(b.check_in))
-        .slice(0, 3);
-
-      // Recent bookings (last 5)
-      const recent = allBookings.slice(0, 5);
+      const allBookings = rawBookings || [];
 
       // Fetch property details
-      const allPropIds = [
-        ...new Set([...upcoming, ...recent].map((b) => b.property_id)),
-      ];
-      let propMap = new Map<string, { title: string; photos: string[]; address: string }>();
-      if (allPropIds.length > 0) {
+      const propIds = [...new Set(allBookings.map((b) => b.property_id))];
+      let propMap = new Map<string, { title: string; photos: string[] }>();
+      if (propIds.length > 0) {
         const { data: props } = await supabase
           .from("properties")
-          .select("id, title, photos, address")
-          .in("id", allPropIds);
+          .select("id, title, photos")
+          .in("id", propIds);
         propMap = new Map((props || []).map((p) => [p.id, p]));
       }
 
-      const enrich = (b: BookingPreview) => {
-        const prop = propMap.get(b.property_id);
-        return {
-          ...b,
-          property_title: prop?.title || "Alloggio",
-          property_photo: prop?.photos?.[0] || undefined,
-          property_address: prop?.address || "",
-        };
-      };
-
-      setUpcomingTrips(upcoming.map(enrich));
-      setRecentBookings(recent.map(enrich));
+      setBookings(
+        allBookings.map((b) => {
+          const prop = propMap.get(b.property_id);
+          return {
+            ...b,
+            property_title: prop?.title || "Alloggio",
+            property_photo: prop?.photos?.[0] || null,
+          };
+        })
+      );
       setLoading(false);
     }
     load();
   }, [supabase]);
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="h-14 bg-neutral-100 rounded-2xl animate-pulse" />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-32 bg-neutral-100 rounded-2xl animate-pulse" />
-          ))}
-        </div>
-        <div className="grid lg:grid-cols-5 gap-4">
-          <div className="lg:col-span-3 h-64 bg-neutral-100 rounded-2xl animate-pulse" />
-          <div className="lg:col-span-2 h-64 bg-neutral-100 rounded-2xl animate-pulse" />
-        </div>
-      </div>
-    );
-  }
+  const filtered = useMemo(() => {
+    const today = todayStr();
+    const activeStatuses = ["confirmed", "authorized", "captured"];
 
-  const stats = [
-    {
-      label: "Prenotazioni",
-      value: activeBookings,
-      icon: CalendarCheck,
-      iconBg: "bg-violet-50",
-      iconColor: "text-violet-600",
-    },
-    {
-      label: "Spesa totale",
-      value: `€${totalSpent.toLocaleString("it-IT")}`,
-      icon: Euro,
-      iconBg: "bg-emerald-50",
-      iconColor: "text-emerald-600",
-    },
-    {
-      label: "Ospiti totali",
-      value: totalGuests,
-      icon: Users,
-      iconBg: "bg-blue-50",
-      iconColor: "text-blue-600",
-    },
-    {
-      label: "Preferiti",
-      value: 0,
-      icon: Heart,
-      iconBg: "bg-rose-50",
-      iconColor: "text-rose-500",
-    },
-  ];
+    switch (filter) {
+      case "In arrivo":
+        return bookings.filter(
+          (b) => b.check_in >= today && activeStatuses.includes(b.status)
+        );
+      case "In corso":
+        return bookings.filter(
+          (b) =>
+            b.check_in <= today &&
+            b.check_out >= today &&
+            activeStatuses.includes(b.status)
+        );
+      case "Completati":
+        return bookings.filter(
+          (b) =>
+            b.status === "completed" ||
+            b.status === "captured" ||
+            (b.check_out < today &&
+              activeStatuses.includes(b.status))
+        );
+      case "Cancellati":
+        return bookings.filter((b) => b.status === "cancelled");
+      default:
+        return bookings;
+    }
+  }, [bookings, filter]);
 
-  const bookingsByStatus = [
-    {
-      label: "Confermate",
-      value: recentBookings.filter((b) => b.status === "confirmed").length,
-      color: "#10b981",
-    },
-    {
-      label: "Autorizzate",
-      value: recentBookings.filter((b) => b.status === "authorized").length,
-      color: "#6366f1",
-    },
-    {
-      label: "Completate",
-      value: recentBookings.filter((b) => b.status === "captured").length,
-      color: "#8b5cf6",
-    },
-    {
-      label: "Cancellate",
-      value: recentBookings.filter((b) => b.status === "cancelled").length,
-      color: "#ef4444",
-    },
-  ].filter((s) => s.value > 0);
+  if (loading) return <LoadingSkeleton />;
 
   return (
-    <div className="space-y-6">
-      {/* ═══ Welcome header ═══ */}
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="flex items-center justify-between"
-      >
-        <div>
-          <h1 className="text-2xl lg:text-[28px] font-bold text-neutral-900">
-            Bentornato, {userName}
-          </h1>
-          <p className="text-neutral-400 text-sm mt-1 capitalize">{getTodayFormatted()}</p>
-        </div>
-        <Link
-          href="/dashboard/bookings"
-          className="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-medium hover:bg-violet-700 transition-colors"
-        >
-          <CalendarCheck className="w-4 h-4" />
-          Le mie prenotazioni
-        </Link>
-      </motion.div>
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold text-neutral-900">I miei soggiorni</h1>
 
-      {/* ═══ Stats cards ═══ */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, i) => (
-          <StatCard key={stat.label} {...stat} index={i} />
-        ))}
-      </div>
+      <FilterChips filters={GUEST_FILTERS} active={filter} onChange={setFilter} />
 
-      {/* ═══ Charts row ═══ */}
-      <div className="grid lg:grid-cols-5 gap-4">
-        {/* Revenue / Spending chart */}
+      {filtered.length === 0 ? (
         <motion.div
-          custom={4}
-          initial="hidden"
-          animate="visible"
-          variants={fadeSlide}
-          className="lg:col-span-3"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center justify-center py-16 text-center"
         >
-          <div className="bg-white rounded-2xl border border-neutral-100 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-base font-semibold text-neutral-900">Spese mensili</h3>
-                <p className="text-sm text-neutral-400 mt-0.5">Ultimi 6 mesi</p>
-              </div>
-              <div className="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center">
-                <BarChart3 className="w-4 h-4 text-violet-600" />
-              </div>
-            </div>
-            {monthlyData.some((d) => d.value > 0) ? (
-              <MiniBarChart data={monthlyData} />
-            ) : (
-              <div className="h-36 flex items-center justify-center text-sm text-neutral-400">
-                Nessun dato disponibile
-              </div>
-            )}
+          <div className="w-14 h-14 rounded-2xl bg-neutral-100 flex items-center justify-center mb-4">
+            <Search className="w-6 h-6 text-neutral-400" strokeWidth={1.5} />
           </div>
+          <p className="text-sm font-semibold text-neutral-900 mb-1">Nessun soggiorno</p>
+          <p className="text-xs text-neutral-400 mb-5">Inizia a esplorare le destinazioni</p>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-neutral-900 text-white rounded-full text-sm font-medium hover:bg-neutral-800 transition-colors"
+          >
+            Esplora alloggi
+          </Link>
         </motion.div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((booking, i) => (
+            <motion.div
+              key={booking.id}
+              custom={i}
+              initial="hidden"
+              animate="visible"
+              variants={fadeUp}
+            >
+              <Link href={`/dashboard/bookings/${booking.id}`}>
+                <div className="bg-white rounded-2xl border border-neutral-100 p-4 flex gap-4 hover:shadow-sm transition-shadow">
+                  {/* Property photo */}
+                  <div className="w-20 h-20 rounded-xl overflow-hidden bg-neutral-100 shrink-0">
+                    {booking.property_photo ? (
+                      <img
+                        src={booking.property_photo}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <MapPin className="w-5 h-5 text-neutral-300" />
+                      </div>
+                    )}
+                  </div>
 
-        {/* Donut chart */}
-        <motion.div
-          custom={5}
-          initial="hidden"
-          animate="visible"
-          variants={fadeSlide}
-          className="lg:col-span-2"
-        >
-          <div className="bg-white rounded-2xl border border-neutral-100 p-6 h-full flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-neutral-900">Prenotazioni</h3>
-              <span className="text-xs text-neutral-400">Per stato</span>
-            </div>
-            <div className="flex-1 flex items-center justify-center">
-              {bookingsByStatus.length > 0 ? (
-                <DonutChart
-                  segments={bookingsByStatus}
-                  centerLabel="Totale"
-                  centerValue={recentBookings.length}
-                />
-              ) : (
-                <div className="text-sm text-neutral-400">Nessuna prenotazione</div>
-              )}
-            </div>
-          </div>
-        </motion.div>
-      </div>
+                  {/* Details */}
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <p className="text-sm font-semibold text-neutral-900 truncate">
+                      {booking.property_title}
+                    </p>
+                    <p className="text-xs text-neutral-500 mt-1">
+                      {formatDateIT(booking.check_in)} &ndash; {formatDateIT(booking.check_out)}
+                    </p>
+                    <p className="text-sm font-bold text-neutral-900 mt-1">
+                      &euro;{Number(booking.total_price).toLocaleString("it-IT")}
+                    </p>
+                  </div>
 
-      {/* ═══ Bottom row ═══ */}
-      <div className="grid lg:grid-cols-5 gap-4">
-        {/* Upcoming trips */}
-        <motion.div
-          custom={6}
-          initial="hidden"
-          animate="visible"
-          variants={fadeSlide}
-          className="lg:col-span-3"
-        >
-          <div className="bg-white rounded-2xl border border-neutral-100 p-6">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-base font-semibold text-neutral-900">Prossimi viaggi</h3>
-              {upcomingTrips.length > 0 && (
-                <Link
-                  href="/dashboard/bookings"
-                  className="text-sm font-medium text-violet-600 hover:text-violet-700 flex items-center gap-1 transition-colors"
-                >
-                  Vedi tutti <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              )}
-            </div>
-
-            {upcomingTrips.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-violet-50 flex items-center justify-center mb-4">
-                  <Plane className="w-7 h-7 text-violet-400" strokeWidth={1.5} />
+                  {/* Status */}
+                  <div className="shrink-0 flex items-center">
+                    <StatusBadge status={booking.status} />
+                  </div>
                 </div>
-                <h3 className="text-sm font-semibold text-neutral-900 mb-1">
-                  Nessun viaggio in programma
-                </h3>
-                <p className="text-xs text-neutral-400 mb-5 max-w-xs">
-                  Esplora le destinazioni e prenota il tuo prossimo soggiorno.
-                </p>
-                <Link
-                  href="/"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-xl text-sm font-medium hover:bg-violet-700 transition-colors"
-                >
-                  <Search className="w-4 h-4" />
-                  Esplora alloggi
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {upcomingTrips.map((trip) => (
-                  <Link key={trip.id} href={`/dashboard/bookings/${trip.id}`}>
-                    <div className="flex items-center gap-4 p-3 rounded-xl hover:bg-neutral-50 transition-colors group cursor-pointer">
-                      <div className="w-16 h-14 rounded-xl overflow-hidden bg-neutral-100 shrink-0">
-                        {trip.property_photo ? (
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════ Host: Prenotazioni ═══════════════ */
+
+const HOST_FILTERS = ["Tutti", "In attesa", "Confermati", "Completati", "Cancellati"];
+
+function HostPrenotazioni() {
+  const supabase = createClient();
+  const [bookings, setBookings] = useState<HostBooking[]>([]);
+  const [filter, setFilter] = useState("Tutti");
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  async function loadBookings() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    // Get host's properties
+    const { data: properties } = await supabase
+      .from("properties")
+      .select("id, title")
+      .eq("user_id", user.id);
+
+    const props = properties || [];
+    if (props.length === 0) {
+      setLoading(false);
+      return;
+    }
+
+    const propIds = props.map((p) => p.id);
+    const propMap = new Map(props.map((p) => [p.id, p.title]));
+
+    // Get bookings for those properties
+    const { data: rawBookings } = await supabase
+      .from("bookings")
+      .select("id, property_id, guest_id, check_in, check_out, guests, total_price, status, created_at")
+      .in("property_id", propIds)
+      .order("created_at", { ascending: false });
+
+    const allBookings = rawBookings || [];
+
+    // Get guest profiles
+    const guestIds = [...new Set(allBookings.map((b) => b.guest_id))];
+    let guestMap = new Map<string, { full_name: string; avatar_url: string | null }>();
+    if (guestIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .in("id", guestIds);
+      guestMap = new Map(
+        (profiles || []).map((p) => [p.id, { full_name: p.full_name, avatar_url: p.avatar_url }])
+      );
+    }
+
+    setBookings(
+      allBookings.map((b) => {
+        const guest = guestMap.get(b.guest_id);
+        return {
+          ...b,
+          property_title: propMap.get(b.property_id) || "Proprieta",
+          guest_name: guest?.full_name || "Ospite",
+          guest_avatar: guest?.avatar_url || null,
+        };
+      })
+    );
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    loadBookings();
+  }, [supabase]);
+
+  const filtered = useMemo(() => {
+    const today = todayStr();
+
+    switch (filter) {
+      case "In attesa":
+        return bookings.filter((b) =>
+          ["pending", "pending_payment"].includes(b.status)
+        );
+      case "Confermati":
+        return bookings.filter((b) =>
+          ["confirmed", "authorized", "captured"].includes(b.status)
+        );
+      case "Completati":
+        return bookings.filter(
+          (b) =>
+            b.status === "completed" ||
+            (b.status === "captured" && b.check_out < today)
+        );
+      case "Cancellati":
+        return bookings.filter((b) => b.status === "cancelled");
+      default:
+        return bookings;
+    }
+  }, [bookings, filter]);
+
+  async function handleAction(bookingId: string, newStatus: "confirmed" | "cancelled") {
+    setActionLoading(bookingId);
+    await supabase
+      .from("bookings")
+      .update({ status: newStatus })
+      .eq("id", bookingId);
+    // Refresh bookings
+    setBookings((prev) =>
+      prev.map((b) => (b.id === bookingId ? { ...b, status: newStatus } : b))
+    );
+    setActionLoading(null);
+  }
+
+  if (loading) return <LoadingSkeleton />;
+
+  return (
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold text-neutral-900">Prenotazioni</h1>
+
+      <FilterChips filters={HOST_FILTERS} active={filter} onChange={setFilter} />
+
+      {filtered.length === 0 ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center justify-center py-16 text-center"
+        >
+          <div className="w-14 h-14 rounded-2xl bg-neutral-100 flex items-center justify-center mb-4">
+            <Search className="w-6 h-6 text-neutral-400" strokeWidth={1.5} />
+          </div>
+          <p className="text-sm font-semibold text-neutral-900 mb-1">Nessuna prenotazione</p>
+          <p className="text-xs text-neutral-400">Le prenotazioni appariranno qui</p>
+        </motion.div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((booking, i) => {
+            const isPending = ["pending", "pending_payment"].includes(booking.status);
+
+            return (
+              <motion.div
+                key={booking.id}
+                custom={i}
+                initial="hidden"
+                animate="visible"
+                variants={fadeUp}
+              >
+                <div className="bg-white rounded-2xl border border-neutral-100 overflow-hidden">
+                  {/* Content */}
+                  <div className="p-4">
+                    {/* Top row: avatar + property + amount */}
+                    <div className="flex items-center gap-3">
+                      {/* Guest avatar */}
+                      <div className="w-10 h-10 rounded-full overflow-hidden bg-neutral-100 shrink-0">
+                        {booking.guest_avatar ? (
                           <img
-                            src={trip.property_photo}
+                            src={booking.guest_avatar}
                             alt=""
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <MapPin className="w-4 h-4 text-neutral-300" />
+                          <div className="w-full h-full flex items-center justify-center text-sm font-semibold text-neutral-400">
+                            {booking.guest_name.charAt(0).toUpperCase()}
                           </div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-neutral-900 truncate">
-                          {trip.property_title}
+                          {booking.property_title}
                         </p>
-                        <p className="text-xs text-neutral-400 mt-0.5">
-                          {formatDateIT(trip.check_in)} - {formatDateIT(trip.check_out)} &middot;{" "}
-                          {trip.guests} ospite{trip.guests > 1 ? "i" : ""}
+                        <p className="text-xs text-rose-500 font-medium truncate">
+                          {booking.guest_name}
                         </p>
                       </div>
-                      <div className="text-right shrink-0">
+                      <div className="shrink-0 text-right">
                         <p className="text-sm font-bold text-neutral-900">
-                          &euro;{Number(trip.total_price).toLocaleString("it-IT")}
+                          &euro;{Number(booking.total_price).toLocaleString("it-IT")}
                         </p>
-                        <StatusBadge status={trip.status} />
+                        <StatusBadge status={booking.status} />
                       </div>
                     </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </motion.div>
 
-        {/* Quick actions */}
-        <motion.div
-          custom={7}
-          initial="hidden"
-          animate="visible"
-          variants={fadeSlide}
-          className="lg:col-span-2"
-        >
-          <div className="bg-white rounded-2xl border border-neutral-100 p-6 h-full">
-            <h3 className="text-base font-semibold text-neutral-900 mb-5">Azioni rapide</h3>
-            <div className="space-y-3">
-              {[
-                {
-                  label: "Esplora alloggi",
-                  desc: "Cerca sulla mappa",
-                  icon: Search,
-                  href: "/",
-                  color: "bg-violet-50 text-violet-600",
-                },
-                {
-                  label: "Le mie prenotazioni",
-                  desc: "Gestisci i soggiorni",
-                  icon: CalendarCheck,
-                  href: "/dashboard/bookings",
-                  color: "bg-emerald-50 text-emerald-600",
-                },
-                {
-                  label: "Preferiti",
-                  desc: "Alloggi salvati",
-                  icon: Heart,
-                  href: "/dashboard/favorites",
-                  color: "bg-rose-50 text-rose-500",
-                },
-                {
-                  label: "Messaggi",
-                  desc: "Parla col concierge",
-                  icon: MessageCircle,
-                  href: "/dashboard/messages",
-                  color: "bg-blue-50 text-blue-600",
-                },
-              ].map((action) => (
-                <Link key={action.href} href={action.href}>
-                  <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-50 transition-colors group cursor-pointer">
-                    <div
-                      className={`w-10 h-10 rounded-xl ${action.color} flex items-center justify-center shrink-0`}
-                    >
-                      <action.icon className="w-4.5 h-4.5" strokeWidth={1.5} />
+                    {/* Date boxes */}
+                    <div className="flex items-center gap-2 mt-3">
+                      <div className="flex-1 rounded-lg border border-neutral-100 p-2">
+                        <p className="text-[10px] text-neutral-400 uppercase tracking-wide">Inizio</p>
+                        <p className="text-sm font-semibold text-neutral-900">
+                          {formatDateIT(booking.check_in)}
+                        </p>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-neutral-300 shrink-0" />
+                      <div className="flex-1 rounded-lg border border-neutral-100 p-2">
+                        <p className="text-[10px] text-neutral-400 uppercase tracking-wide">Fine</p>
+                        <p className="text-sm font-semibold text-neutral-900">
+                          {formatDateIT(booking.check_out)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-neutral-900">{action.label}</p>
-                      <p className="text-xs text-neutral-400">{action.desc}</p>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-neutral-300 group-hover:text-violet-500 transition-colors" />
                   </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-      </div>
+
+                  {/* Action buttons for pending bookings */}
+                  {isPending && (
+                    <div className="flex border-t border-neutral-100">
+                      <button
+                        onClick={() => handleAction(booking.id, "cancelled")}
+                        disabled={actionLoading === booking.id}
+                        className="flex-1 py-3 text-sm font-medium text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+                      >
+                        Rifiuta
+                      </button>
+                      <div className="w-px bg-neutral-100" />
+                      <button
+                        onClick={() => handleAction(booking.id, "confirmed")}
+                        disabled={actionLoading === booking.id}
+                        className="flex-1 py-3 text-sm font-medium text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-50"
+                      >
+                        Accetta
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
+
+/* ═══════════════ Main Export ═══════════════ */
 
 export default function DashboardPage() {
   const { mode } = useMode();
 
   if (mode === "host") {
-    return (
-      <div className="flex flex-col h-full">
-        <div className="mb-3 hidden lg:block">
-          <h1 className="text-2xl font-semibold text-neutral-900">I tuoi immobili</h1>
-          <p className="text-neutral-500 text-sm mt-1">
-            Gestisci le tue proprietà e monitora le prenotazioni
-          </p>
-        </div>
-        <HostDashboard />
-      </div>
-    );
+    return <HostPrenotazioni />;
   }
 
-  return <GuestDashboard />;
+  return <GuestSoggiorni />;
 }
