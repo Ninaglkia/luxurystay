@@ -303,6 +303,26 @@ function MapController({ target }: { target: { lat: number; lng: number } | null
   return null;
 }
 
+function GeocoderController({ destination, onResult }: { destination: string | null | undefined; onResult: (pos: { lat: number; lng: number }) => void }) {
+  const map = useMap();
+  const geocodedRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!map || !destination || geocodedRef.current === destination) return;
+    geocodedRef.current = destination;
+
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ address: destination + ", Italia" }, (results, status) => {
+      if (status === "OK" && results && results[0]?.geometry?.location) {
+        const loc = results[0].geometry.location;
+        onResult({ lat: loc.lat(), lng: loc.lng() });
+      }
+    });
+  }, [map, destination, onResult]);
+
+  return null;
+}
+
 function MyLocationButton() {
   const map = useMap();
   const [locating, setLocating] = useState(false);
@@ -585,10 +605,14 @@ interface ExploreMapProps {
   initialCheckout?: string | null;
   initialGuests?: number;
   initialDestination?: string | null;
+  initialLat?: number;
+  initialLng?: number;
 }
 
-export function ExploreMap({ initialCheckin, initialCheckout, initialGuests, initialDestination }: ExploreMapProps = {}) {
-  const [target, setTarget] = useState<{ lat: number; lng: number } | null>(null);
+export function ExploreMap({ initialCheckin, initialCheckout, initialGuests, initialDestination, initialLat, initialLng }: ExploreMapProps = {}) {
+  const [target, setTarget] = useState<{ lat: number; lng: number } | null>(
+    initialLat && initialLng ? { lat: initialLat, lng: initialLng } : null
+  );
   const [checkIn, setCheckIn] = useState<Date | null>(initialCheckin ? new Date(initialCheckin + "T00:00:00") : null);
   const [checkOut, setCheckOut] = useState<Date | null>(initialCheckout ? new Date(initialCheckout + "T00:00:00") : null);
   const [guests, setGuests] = useState<GuestsCount>({ adults: initialGuests || 0, children: 0, infants: 0, pets: 0 });
@@ -643,17 +667,7 @@ export function ExploreMap({ initialCheckin, initialCheckout, initialGuests, ini
     return () => { cancelled = true; };
   }, []);
 
-  // Geocode initial destination to center map
-  useEffect(() => {
-    if (!initialDestination) return;
-    const geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ address: initialDestination + ", Italia" }, (results, status) => {
-      if (status === "OK" && results && results[0]?.geometry?.location) {
-        const loc = results[0].geometry.location;
-        setTarget({ lat: loc.lat(), lng: loc.lng() });
-      }
-    });
-  }, [initialDestination]);
+  // Geocoding is handled by GeocoderController inside APIProvider (see JSX below)
 
   function buildSearchParams(): string {
     const params = new URLSearchParams();
@@ -835,6 +849,7 @@ export function ExploreMap({ initialCheckin, initialCheckout, initialGuests, ini
             <PropertyMarkers properties={visibleProperties} dateParams={dateParams} />
             <BoundsWatcher onBoundsChange={handleBoundsChange} />
             <MapController target={target} />
+            {!initialLat && !initialLng && <GeocoderController destination={initialDestination} onResult={setTarget} />}
             <MyLocationButton />
           </div>
         </div>

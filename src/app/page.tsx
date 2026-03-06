@@ -14,12 +14,12 @@ import type { User } from "@supabase/supabase-js";
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
 const destinations = [
-  { name: "Roma", slug: "roma", emoji: "🏛️" },
-  { name: "Milano", slug: "milano", emoji: "🏙️" },
-  { name: "Firenze", slug: "firenze", emoji: "🎨" },
-  { name: "Napoli", slug: "napoli", emoji: "🌋" },
-  { name: "Venezia", slug: "venezia", emoji: "🚣" },
-  { name: "Costiera Amalfitana", slug: "costiera-amalfitana", emoji: "🌊" },
+  { name: "Roma", slug: "roma", emoji: "🏛️", gradient: "from-amber-800 via-orange-900 to-yellow-950", lat: 41.9028, lng: 12.4964 },
+  { name: "Milano", slug: "milano", emoji: "🏙️", gradient: "from-slate-700 via-zinc-800 to-slate-900", lat: 45.4642, lng: 9.19 },
+  { name: "Firenze", slug: "firenze", emoji: "🎨", gradient: "from-rose-800 via-red-900 to-orange-950", lat: 43.7696, lng: 11.2558 },
+  { name: "Napoli", slug: "napoli", emoji: "🌋", gradient: "from-blue-800 via-sky-900 to-cyan-950", lat: 40.8518, lng: 14.2681 },
+  { name: "Venezia", slug: "venezia", emoji: "🚣", gradient: "from-teal-700 via-emerald-800 to-cyan-900", lat: 45.4408, lng: 12.3155 },
+  { name: "Costiera Amalfitana", slug: "costiera-amalfitana", emoji: "🌊", gradient: "from-indigo-700 via-blue-800 to-sky-900", lat: 40.6333, lng: 14.6029 },
 ];
 
 export default function Home() {
@@ -50,7 +50,11 @@ export default function Home() {
 
   const handleSearch = () => {
     const params = new URLSearchParams();
-    if (selectedPlace) params.set("destination", selectedPlace.name);
+    if (selectedPlace) {
+      params.set("destination", selectedPlace.name);
+      params.set("lat", String(selectedPlace.lat));
+      params.set("lng", String(selectedPlace.lng));
+    }
     if (checkIn) params.set("checkin", checkIn.toISOString().split("T")[0]);
     if (checkOut) params.set("checkout", checkOut.toISOString().split("T")[0]);
     const totalGuests = guests.adults + guests.children;
@@ -77,6 +81,8 @@ export default function Home() {
               <source src="/videos/hero-villa.mp4" type="video/mp4" />
             </video>
             <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/70" />
+            {/* Hide watermark in bottom-right corner */}
+            <div className="absolute bottom-0 right-0 w-40 h-12 bg-gradient-to-tl from-black/90 via-black/70 to-transparent" />
           </div>
 
           {/* Header */}
@@ -199,13 +205,13 @@ export default function Home() {
             {destinations.map((dest) => (
               <Link
                 key={dest.slug}
-                href={`/search?destination=${dest.slug}`}
-                className="group relative h-44 sm:h-52 rounded-2xl overflow-hidden bg-neutral-900 transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                href={`/search?destination=${encodeURIComponent(dest.name)}&lat=${dest.lat}&lng=${dest.lng}`}
+                className={`group relative h-44 sm:h-52 rounded-2xl overflow-hidden bg-gradient-to-br ${dest.gradient} transition-all hover:scale-[1.02] active:scale-[0.98] hover:shadow-xl`}
               >
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/10 group-hover:from-black/80 transition-colors" />
-                <div className="absolute top-4 left-4 text-3xl">{dest.emoji}</div>
+                <div className="absolute inset-0 bg-black/10 group-hover:bg-black/5 transition-colors" />
+                <div className="absolute top-4 left-4 text-4xl drop-shadow-lg">{dest.emoji}</div>
                 <div className="absolute bottom-4 left-4 right-4">
-                  <span className="text-white text-lg font-semibold tracking-tight">
+                  <span className="text-white text-lg font-semibold tracking-tight drop-shadow-md">
                     {dest.name}
                   </span>
                 </div>

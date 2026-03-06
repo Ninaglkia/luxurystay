@@ -26,6 +26,8 @@ function SearchPageContent() {
   const checkout = searchParams.get("checkout");
   const destination = searchParams.get("destination");
   const guestsParam = Number(searchParams.get("guests")) || 0;
+  const lat = searchParams.get("lat") ? Number(searchParams.get("lat")) : undefined;
+  const lng = searchParams.get("lng") ? Number(searchParams.get("lng")) : undefined;
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -94,6 +96,8 @@ function SearchPageContent() {
           initialCheckout={checkout}
           initialGuests={guestsParam}
           initialDestination={destination}
+          initialLat={lat}
+          initialLng={lng}
         />
       </main>
 
