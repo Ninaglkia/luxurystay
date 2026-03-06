@@ -580,11 +580,18 @@ function MapSkeleton() {
 
 /* ═══════════════ Main ExploreMap ═══════════════ */
 
-export function ExploreMap() {
+interface ExploreMapProps {
+  initialCheckin?: string | null;
+  initialCheckout?: string | null;
+  initialGuests?: number;
+  initialDestination?: string | null;
+}
+
+export function ExploreMap({ initialCheckin, initialCheckout, initialGuests, initialDestination }: ExploreMapProps = {}) {
   const [target, setTarget] = useState<{ lat: number; lng: number } | null>(null);
-  const [checkIn, setCheckIn] = useState<Date | null>(null);
-  const [checkOut, setCheckOut] = useState<Date | null>(null);
-  const [guests, setGuests] = useState<GuestsCount>({ adults: 0, children: 0, infants: 0, pets: 0 });
+  const [checkIn, setCheckIn] = useState<Date | null>(initialCheckin ? new Date(initialCheckin + "T00:00:00") : null);
+  const [checkOut, setCheckOut] = useState<Date | null>(initialCheckout ? new Date(initialCheckout + "T00:00:00") : null);
+  const [guests, setGuests] = useState<GuestsCount>({ adults: initialGuests || 0, children: 0, infants: 0, pets: 0 });
   const [mapLoaded, setMapLoaded] = useState(false);
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [showFilters, setShowFilters] = useState(false);
@@ -636,14 +643,16 @@ export function ExploreMap() {
     return () => { cancelled = true; };
   }, []);
 
-  function buildDateParams(): string {
+  function buildSearchParams(): string {
     const params = new URLSearchParams();
     if (checkIn) params.set("checkin", checkIn.toISOString().split("T")[0]);
     if (checkOut) params.set("checkout", checkOut.toISOString().split("T")[0]);
+    const totalGuests = guests.adults + guests.children;
+    if (totalGuests > 0) params.set("guests", String(totalGuests));
     return params.toString();
   }
 
-  const dateParams = buildDateParams();
+  const dateParams = buildSearchParams();
 
   const toggleWishlist = useCallback(async (propertyId: string) => {
     const supabase = createClient();

@@ -25,6 +25,7 @@ function SearchPageContent() {
   const checkin = searchParams.get("checkin");
   const checkout = searchParams.get("checkout");
   const destination = searchParams.get("destination");
+  const guestsParam = Number(searchParams.get("guests")) || 0;
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -88,7 +89,12 @@ function SearchPageContent() {
 
       {/* Map + Properties */}
       <main className="flex-1 flex flex-col p-4 lg:p-6 min-h-[calc(100vh-4rem)]">
-        <ExploreMap />
+        <ExploreMap
+          initialCheckin={checkin}
+          initialCheckout={checkout}
+          initialGuests={guestsParam}
+          initialDestination={destination}
+        />
       </main>
 
       <Footer />
