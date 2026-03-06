@@ -1268,7 +1268,7 @@ export default function PropertyPage() {
                       </button>
                     </div>
                     <div className="border-t border-neutral-400">
-                      <GuestsPicker guests={guests} onGuestsChange={setGuests} maxGuests={property.guests} />
+                      <GuestsPicker guests={guests} onGuestsChange={setGuests} />
                     </div>
                   </div>
 
