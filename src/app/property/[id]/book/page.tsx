@@ -56,6 +56,7 @@ export default function BookingPage() {
   const [success, setSuccess] = useState(false);
   const [messageToHost, setMessageToHost] = useState("");
   const [addInsurance, setAddInsurance] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
 
   // Payment Intent state
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -509,7 +510,7 @@ export default function BookingPage() {
               <div className="py-4 border-b border-neutral-200">
                 <p className="text-sm text-neutral-600">
                   Questa prenotazione non è rimborsabile.{" "}
-                  <span className="underline cursor-pointer text-neutral-900 font-medium">Termini completi</span>
+                  <button onClick={() => setShowTerms(true)} className="underline cursor-pointer text-neutral-900 font-medium">Termini completi</button>
                 </p>
               </div>
 
@@ -573,6 +574,61 @@ export default function BookingPage() {
           </div>
         </div>
       </div>
+
+      {/* Terms modal */}
+      {showTerms && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setShowTerms(false)}>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="relative bg-white rounded-2xl max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-neutral-200 flex items-center justify-between px-6 py-4 z-10">
+              <h3 className="text-lg font-semibold text-neutral-900">Termini e condizioni</h3>
+              <button onClick={() => setShowTerms(false)} className="p-2 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer hover:bg-neutral-100 rounded-full">
+                <svg className="w-5 h-5 text-neutral-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-4 text-[15px] text-neutral-700 leading-relaxed">
+              <div>
+                <h4 className="font-semibold text-neutral-900 mb-1">Politica di cancellazione</h4>
+                {property.cancellation_policy === "flessibile" && (
+                  <p><strong>Flessibile</strong> — Cancellazione gratuita fino a 24 ore prima del check-in. Dopo tale termine, rimborso del 50%.</p>
+                )}
+                {property.cancellation_policy === "moderata" && (
+                  <p><strong>Moderata</strong> — Cancellazione gratuita fino a 5 giorni prima del check-in. Rimborso del 50% tra 5 giorni e 24 ore prima. Nessun rimborso nelle ultime 24 ore.</p>
+                )}
+                {property.cancellation_policy === "rigida" && (
+                  <p><strong>Rigida</strong> — Rimborso del 50% solo fino a 7 giorni prima del check-in. Nessun rimborso dopo tale data.</p>
+                )}
+                {!property.cancellation_policy && (
+                  <p>Questa prenotazione non è rimborsabile una volta confermata.</p>
+                )}
+              </div>
+              <div>
+                <h4 className="font-semibold text-neutral-900 mb-1">Pagamento</h4>
+                <p>L&apos;importo totale viene addebitato al momento della conferma della prenotazione. I costi del servizio LuxuryStay non sono rimborsabili.</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-neutral-900 mb-1">Regole della casa</h4>
+                <p>L&apos;ospite è tenuto a rispettare le regole della casa indicate dall&apos;host. In caso di violazione, l&apos;host può annullare la prenotazione senza rimborso.</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-neutral-900 mb-1">Danni</h4>
+                <p>L&apos;ospite è responsabile per eventuali danni causati all&apos;alloggio durante il soggiorno. LuxuryStay può addebitare i costi di riparazione.</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-neutral-900 mb-1">Responsabilità</h4>
+                <p>LuxuryStay agisce come intermediario tra host e ospite. Non è responsabile per problemi relativi all&apos;alloggio, ma si impegna a mediare eventuali controversie.</p>
+              </div>
+            </div>
+            <div className="sticky bottom-0 bg-white border-t border-neutral-200 px-6 py-4">
+              <button onClick={() => setShowTerms(false)} className="w-full bg-neutral-900 text-white rounded-xl py-3 text-sm font-semibold hover:bg-neutral-800 transition-colors cursor-pointer">
+                Ho capito
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

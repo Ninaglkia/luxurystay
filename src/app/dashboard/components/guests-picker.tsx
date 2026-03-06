@@ -12,6 +12,7 @@ export interface GuestsCount {
 interface GuestsPickerProps {
   guests: GuestsCount;
   onGuestsChange: (guests: GuestsCount) => void;
+  maxGuests?: number;
 }
 
 function Counter({ label, description, value, onIncrement, onDecrement, min = 0, max = 16 }: {
@@ -76,7 +77,7 @@ function Counter({ label, description, value, onIncrement, onDecrement, min = 0,
   );
 }
 
-export function GuestsPicker({ guests, onGuestsChange }: GuestsPickerProps) {
+export function GuestsPicker({ guests, onGuestsChange, maxGuests }: GuestsPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -97,10 +98,14 @@ export function GuestsPicker({ guests, onGuestsChange }: GuestsPickerProps) {
   }, [isOpen]);
 
   function update(key: keyof GuestsCount, delta: number) {
-    onGuestsChange({ ...guests, [key]: guests[key] + delta });
+    const next = { ...guests, [key]: guests[key] + delta };
+    if (maxGuests && (key === "adults" || key === "children") && next.adults + next.children > maxGuests) return;
+    onGuestsChange(next);
   }
 
   const totalGuests = guests.adults + guests.children;
+  const adultsMax = maxGuests ? maxGuests - guests.children : 16;
+  const childrenMax = maxGuests ? maxGuests - guests.adults : 8;
   const parts: string[] = [];
   if (totalGuests > 0) parts.push(`${totalGuests} ospit${totalGuests === 1 ? "e" : "i"}`);
   if (guests.infants > 0) parts.push(`${guests.infants} neonat${guests.infants === 1 ? "o" : "i"}`);
@@ -165,10 +170,10 @@ export function GuestsPicker({ guests, onGuestsChange }: GuestsPickerProps) {
               {/* Counters */}
               <div className="flex-1 overflow-y-auto px-5">
                 <Counter label="Adulti" description="Dai 13 anni in su" value={guests.adults}
-                  onIncrement={() => update("adults", 1)} onDecrement={() => update("adults", -1)} max={16} />
+                  onIncrement={() => update("adults", 1)} onDecrement={() => update("adults", -1)} max={adultsMax} />
                 <div className="h-px bg-neutral-100" />
                 <Counter label="Bambini" description="Dai 2 ai 12 anni" value={guests.children}
-                  onIncrement={() => update("children", 1)} onDecrement={() => update("children", -1)} max={8} />
+                  onIncrement={() => update("children", 1)} onDecrement={() => update("children", -1)} max={childrenMax} />
                 <div className="h-px bg-neutral-100" />
                 <Counter label="Neonati" description="Sotto i 2 anni" value={guests.infants}
                   onIncrement={() => update("infants", 1)} onDecrement={() => update("infants", -1)} max={5} />

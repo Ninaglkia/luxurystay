@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { APIProvider, Map, AdvancedMarker } from "@vis.gl/react-google-maps";
+import { GuestsPicker, type GuestsCount } from "@/app/dashboard/components/guests-picker";
 import type { User } from "@supabase/supabase-js";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
@@ -497,7 +498,9 @@ export default function PropertyPage() {
   // Booking widget — pre-fill from URL params if available
   const [checkIn, setCheckIn] = useState(searchParams.get("checkin") || "");
   const [checkOut, setCheckOut] = useState(searchParams.get("checkout") || "");
-  const [guestCount, setGuestCount] = useState(Number(searchParams.get("guests")) || 1);
+  const initialGuestCount = Number(searchParams.get("guests")) || 1;
+  const [guests, setGuests] = useState<GuestsCount>({ adults: initialGuestCount, children: 0, infants: 0, pets: 0 });
+  const guestCount = guests.adults + guests.children;
 
   // Booked dates (fetched from Supabase)
   const [bookedDates, setBookedDates] = useState<Set<string>>(new Set());
@@ -1264,14 +1267,8 @@ export default function PropertyPage() {
                         </span>
                       </button>
                     </div>
-                    <div className="border-t border-neutral-400 p-3">
-                      <label className="block text-[10px] font-bold text-neutral-900 uppercase tracking-wide">Ospiti</label>
-                      <select value={guestCount} onChange={(e) => setGuestCount(Number(e.target.value))}
-                        className="w-full text-sm text-neutral-700 bg-transparent outline-none mt-0.5 cursor-pointer">
-                        {Array.from({ length: property.guests }, (_, i) => i + 1).map(n => (
-                          <option key={n} value={n}>{n} ospite{n > 1 ? "i" : ""}</option>
-                        ))}
-                      </select>
+                    <div className="border-t border-neutral-400">
+                      <GuestsPicker guests={guests} onGuestsChange={setGuests} maxGuests={property.guests} />
                     </div>
                   </div>
 
