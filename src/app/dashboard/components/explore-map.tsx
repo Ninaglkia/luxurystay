@@ -643,6 +643,18 @@ export function ExploreMap({ initialCheckin, initialCheckout, initialGuests, ini
     return () => { cancelled = true; };
   }, []);
 
+  // Geocode initial destination to center map
+  useEffect(() => {
+    if (!initialDestination) return;
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ address: initialDestination + ", Italia" }, (results, status) => {
+      if (status === "OK" && results && results[0]?.geometry?.location) {
+        const loc = results[0].geometry.location;
+        setTarget({ lat: loc.lat(), lng: loc.lng() });
+      }
+    });
+  }, [initialDestination]);
+
   function buildSearchParams(): string {
     const params = new URLSearchParams();
     if (checkIn) params.set("checkin", checkIn.toISOString().split("T")[0]);
@@ -736,7 +748,7 @@ export function ExploreMap({ initialCheckin, initialCheckout, initialGuests, ini
       <div className="flex-1 flex flex-col lg:min-h-0">
         {/* Search controls */}
         <div className="flex flex-col lg:flex-row lg:items-start gap-2 lg:gap-3 mb-3 lg:mb-4">
-          <CitySearch onPlaceSelect={handlePlaceSelect} />
+          <CitySearch onPlaceSelect={handlePlaceSelect} initialValue={initialDestination} />
           <div className="flex flex-col lg:flex-row gap-2 lg:gap-3 w-full lg:w-auto">
             <DatePicker checkIn={checkIn} checkOut={checkOut} onDatesChange={handleDatesChange} />
             <div className="flex flex-col sm:flex-row gap-2 lg:gap-3">

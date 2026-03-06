@@ -5,6 +5,7 @@ import { useMapsLibrary } from "@vis.gl/react-google-maps";
 
 interface CitySearchProps {
   onPlaceSelect: (location: { lat: number; lng: number; name: string }) => void;
+  initialValue?: string | null;
 }
 
 interface Prediction {
@@ -137,8 +138,8 @@ function PlaceIcon({ types }: { types: string[] }) {
   );
 }
 
-export function CitySearch({ onPlaceSelect }: CitySearchProps) {
-  const [query, setQuery] = useState("");
+export function CitySearch({ onPlaceSelect, initialValue }: CitySearchProps) {
+  const [query, setQuery] = useState(initialValue || "");
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
