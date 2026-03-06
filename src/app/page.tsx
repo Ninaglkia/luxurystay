@@ -63,24 +63,24 @@ export default function Home() {
     <APIProvider apiKey={GOOGLE_MAPS_API_KEY} libraries={["places"]}>
       <div className="min-h-screen flex flex-col bg-white">
         {/* ==================== HERO SECTION ==================== */}
-        <section className="relative h-[100svh] w-full overflow-hidden">
-          {/* Video background */}
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-            className="absolute inset-0 w-full h-full object-cover"
-          >
-            <source src="/videos/hero-villa.mp4" type="video/mp4" />
-          </video>
-
-          {/* Dark overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/70" />
+        <section className="relative h-[100svh] w-full">
+          {/* Video background — clip to hero bounds */}
+          <div className="absolute inset-0 overflow-hidden">
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
+              className="w-full h-full object-cover"
+            >
+              <source src="/videos/hero-villa.mp4" type="video/mp4" />
+            </video>
+            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/70" />
+          </div>
 
           {/* Header */}
-          <header className="relative z-10">
+          <header className="relative z-20">
             <div className="max-w-7xl mx-auto px-5 lg:px-8 h-20 flex items-center justify-between">
               <Link href="/" className="flex items-center gap-2.5">
                 <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -114,42 +114,60 @@ export default function Home() {
           </header>
 
           {/* Center content */}
-          <div className="relative z-10 flex flex-col items-center justify-center h-[calc(100%-5rem)] px-5">
-            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-light text-white text-center tracking-tight leading-[1.1] mb-4">
+          <div className="relative z-20 flex flex-col items-center justify-center h-[calc(100%-5rem)] px-5 pb-32">
+            <h1 className="font-serif text-4xl sm:text-5xl lg:text-7xl font-normal text-white text-center tracking-tight leading-[1.1] mb-4">
               Prenota la tua
               <br />
-              <span className="font-normal italic">villa da sogno</span>
+              <span className="italic">villa da sogno</span>
             </h1>
-            <p className="text-base sm:text-lg text-white/60 text-center mb-12 max-w-md font-light">
+            <p className="text-base sm:text-lg text-white/60 text-center mb-12 max-w-md">
               Ville di lusso in Italia, selezionate per te
             </p>
 
-            {/* Search bar - Airbnb style */}
-            <div className="w-full max-w-4xl">
-              <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl shadow-black/20 p-4 sm:p-5">
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 sm:items-end">
+            {/* Search bar */}
+            <div className="w-full max-w-3xl relative z-30">
+              <div className="bg-white rounded-2xl shadow-2xl shadow-black/20 p-3">
+                {/* Desktop: single row */}
+                <div className="hidden sm:flex items-center gap-0">
                   {/* Destination */}
-                  <div className="flex-1 min-w-0">
-                    <label className="block text-[11px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5 px-1">Destinazione</label>
+                  <div className="flex-1 min-w-0 px-1">
                     <CitySearch onPlaceSelect={handlePlaceSelect} />
                   </div>
 
+                  <div className="w-px h-10 bg-neutral-200 shrink-0" />
+
                   {/* Dates */}
-                  <div className="sm:w-auto sm:min-w-[280px]">
-                    <label className="block text-[11px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5 px-1">Date</label>
+                  <div className="shrink-0 px-1">
                     <DatePicker checkIn={checkIn} checkOut={checkOut} onDatesChange={handleDatesChange} />
                   </div>
 
+                  <div className="w-px h-10 bg-neutral-200 shrink-0" />
+
                   {/* Guests */}
-                  <div className="sm:w-auto sm:min-w-[160px]">
-                    <label className="block text-[11px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5 px-1">Ospiti</label>
+                  <div className="shrink-0 px-1">
                     <GuestsPicker guests={guests} onGuestsChange={setGuests} />
                   </div>
 
                   {/* Search button */}
                   <button
                     onClick={handleSearch}
-                    className="bg-neutral-900 text-white px-6 py-3 min-h-[44px] rounded-xl text-sm font-medium hover:bg-neutral-800 transition-colors shrink-0 flex items-center justify-center gap-2 sm:self-end cursor-pointer"
+                    className="bg-neutral-900 text-white w-12 h-12 rounded-xl flex items-center justify-center hover:bg-neutral-800 transition-colors shrink-0 cursor-pointer ml-1"
+                    aria-label="Cerca"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Mobile: stacked */}
+                <div className="flex sm:hidden flex-col gap-2">
+                  <CitySearch onPlaceSelect={handlePlaceSelect} />
+                  <DatePicker checkIn={checkIn} checkOut={checkOut} onDatesChange={handleDatesChange} />
+                  <GuestsPicker guests={guests} onGuestsChange={setGuests} />
+                  <button
+                    onClick={handleSearch}
+                    className="bg-neutral-900 text-white py-3 rounded-xl text-sm font-medium hover:bg-neutral-800 transition-colors cursor-pointer flex items-center justify-center gap-2"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
@@ -171,7 +189,7 @@ export default function Home() {
 
         {/* ==================== DESTINATIONS SECTION ==================== */}
         <section className="py-20 px-5 lg:px-8 max-w-7xl mx-auto w-full">
-          <h2 className="text-2xl sm:text-3xl font-semibold text-neutral-900 mb-3">
+          <h2 className="font-serif text-3xl sm:text-4xl text-neutral-900 mb-3">
             Destinazioni popolari
           </h2>
           <p className="text-neutral-500 text-sm mb-10">
@@ -199,7 +217,7 @@ export default function Home() {
         {/* ==================== CTA SECTION ==================== */}
         <section className="py-20 px-5 lg:px-8 bg-neutral-950">
           <div className="max-w-7xl mx-auto text-center">
-            <h2 className="text-3xl sm:text-4xl font-light text-white mb-4">
+            <h2 className="font-serif text-3xl sm:text-4xl text-white mb-4">
               Hai una proprietà di lusso?
             </h2>
             <p className="text-white/50 text-base mb-8 max-w-md mx-auto">
