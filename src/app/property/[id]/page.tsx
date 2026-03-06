@@ -1244,8 +1244,8 @@ export default function PropertyPage() {
 
                 {/* Date + guest picker */}
                 <div className="relative" ref={sidebarCalendarRef}>
-                  <div className="rounded-xl border border-neutral-400 overflow-hidden mb-4">
-                    <div className="grid grid-cols-2 divide-x divide-neutral-400">
+                  <div className="rounded-xl border border-neutral-400 mb-4">
+                    <div className="grid grid-cols-2 divide-x divide-neutral-400 rounded-t-xl overflow-hidden">
                       <button
                         type="button"
                         onClick={() => setShowSidebarCalendar(!showSidebarCalendar)}
