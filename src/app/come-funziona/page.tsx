@@ -137,24 +137,25 @@ function Villa3D() {
   return (
     <div className="w-full h-[350px] lg:h-[450px] cursor-grab active:cursor-grabbing">
       <Canvas
-        camera={{ position: [5, 4, 5], fov: 40 }}
+        camera={{ position: [6, 2.5, 6], fov: 35 }}
         gl={{ antialias: true, alpha: true }}
         style={{ background: "transparent" }}
       >
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[8, 10, 5]} intensity={1.2} castShadow />
-        <directionalLight position={[-5, 5, -5]} intensity={0.4} />
+        <ambientLight intensity={0.8} />
+        <directionalLight position={[8, 10, 5]} intensity={1.5} castShadow />
+        <directionalLight position={[-5, 3, -5]} intensity={0.5} />
         <Suspense fallback={null}>
           <VillaModel />
-          <Environment preset="city" />
+          <Environment preset="sunset" />
         </Suspense>
         <OrbitControls
           autoRotate
-          autoRotateSpeed={1.5}
+          autoRotateSpeed={1.2}
           enableZoom={false}
           enablePan={false}
-          minPolarAngle={Math.PI / 4}
-          maxPolarAngle={Math.PI / 2.2}
+          minPolarAngle={Math.PI / 3}
+          maxPolarAngle={Math.PI / 2.5}
+          target={[0, 1, 0]}
         />
       </Canvas>
     </div>
