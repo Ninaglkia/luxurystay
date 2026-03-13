@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState, Suspense } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, useGLTF, Environment, useAnimations } from "@react-three/drei";
-import * as THREE from "three";
 
 /* ═══════════════ Intersection Observer Hook ═══════════════ */
 
@@ -105,120 +103,80 @@ function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: str
   return <span ref={ref}>{count.toLocaleString("it-IT")}{suffix}</span>;
 }
 
-/* ═══════════════ 3D Villa (Three.js) ═══════════════ */
+/* ═══════════════ Airbnb-style Flip Card ═══════════════ */
 
-interface PieceData {
-  mesh: THREE.Object3D;
-  targetPos: THREE.Vector3;
-  startPos: THREE.Vector3;
-  delay: number;
-}
+function VillaFlipCard() {
+  const [flipped, setFlipped] = useState(false);
 
-function VillaModel() {
-  const { scene, animations } = useGLTF("/models/villa.glb");
-  const groupRef = useRef<THREE.Group>(null);
-  const { actions } = useAnimations(animations, groupRef);
-  const piecesRef = useRef<PieceData[]>([]);
-  const animStartRef = useRef(0);
-  const assembledRef = useRef(false);
-
-  // Center, scale, and prepare assembly animation
   useEffect(() => {
-    const box = new THREE.Box3().setFromObject(scene);
-    const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z);
-    const scale = 5.5 / maxDim;
-    scene.scale.setScalar(scale);
-    scene.position.set(-center.x * scale, -center.y * scale + 0.3, -center.z * scale);
+    // Auto-flip every 4 seconds
+    const interval = setInterval(() => {
+      setFlipped((prev) => !prev);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
-    // Collect all mesh children for assembly animation
-    const pieces: PieceData[] = [];
-    let idx = 0;
-    scene.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        const targetPos = child.position.clone();
-        // Scatter pieces: random offset below + outward
-        const angle = Math.random() * Math.PI * 2;
-        const radius = 3 + Math.random() * 5;
-        const startPos = new THREE.Vector3(
-          targetPos.x + Math.cos(angle) * radius,
-          targetPos.y - 4 - Math.random() * 6,
-          targetPos.z + Math.sin(angle) * radius
-        );
-        child.position.copy(startPos);
-
-        // Stagger delay based on height (bottom pieces first, roof last)
-        const heightRatio = (targetPos.y - box.min.y) / size.y;
-        const delay = heightRatio * 2.0 + Math.random() * 0.3;
-
-        pieces.push({ mesh: child, targetPos, startPos, delay });
-        idx++;
-      }
-    });
-
-    piecesRef.current = pieces;
-    animStartRef.current = 0;
-    assembledRef.current = false;
-  }, [scene]);
-
-  // Animate assembly each frame
-  useFrame((_, delta) => {
-    if (assembledRef.current) return;
-
-    animStartRef.current += delta;
-    const elapsed = animStartRef.current;
-    const duration = 1.2; // Each piece takes 1.2s to fly in
-    let allDone = true;
-
-    for (const piece of piecesRef.current) {
-      const t = Math.max(0, Math.min(1, (elapsed - piece.delay) / duration));
-      if (t < 1) allDone = false;
-
-      // Smooth ease-out cubic
-      const eased = 1 - Math.pow(1 - t, 3);
-
-      piece.mesh.position.lerpVectors(piece.startPos, piece.targetPos, eased);
-    }
-
-    if (allDone && !assembledRef.current) {
-      assembledRef.current = true;
-      // Start character animations after assembly
-      Object.values(actions).forEach((action) => {
-        action?.play();
-      });
-    }
-  });
-
-  return <primitive ref={groupRef} object={scene} />;
-}
-
-function Villa3D() {
   return (
-    <div className="w-full h-[400px] lg:h-[520px] cursor-grab active:cursor-grabbing">
-      <Canvas
-        camera={{ position: [5, 5, 5], fov: 38 }}
-        gl={{ antialias: true, alpha: true }}
-        style={{ background: "transparent" }}
+    <div
+      className="w-[340px] h-[420px] lg:w-[400px] lg:h-[480px] cursor-pointer"
+      style={{ perspective: "1200px" }}
+      onClick={() => setFlipped((prev) => !prev)}
+    >
+      <div
+        className="relative w-full h-full transition-transform duration-[800ms]"
+        style={{
+          transformStyle: "preserve-3d",
+          transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+          transition: "transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+        }}
       >
-        <ambientLight intensity={0.9} />
-        <directionalLight position={[8, 12, 5]} intensity={1.5} castShadow />
-        <directionalLight position={[-5, 8, -5]} intensity={0.5} />
-        <hemisphereLight intensity={0.4} color="#ffeedd" groundColor="#8899aa" />
-        <Suspense fallback={null}>
-          <VillaModel />
-          <Environment preset="sunset" />
-        </Suspense>
-        <OrbitControls
-          autoRotate
-          autoRotateSpeed={1.2}
-          enableZoom={false}
-          enablePan={false}
-          minPolarAngle={Math.PI / 5}
-          maxPolarAngle={Math.PI / 3}
-          target={[0, 0.5, 0]}
-        />
-      </Canvas>
+        {/* ── Front: Villa 1 (our render) ── */}
+        <div
+          className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl shadow-black/20"
+          style={{ backfaceVisibility: "hidden" }}
+        >
+          <Image
+            src="/images/villa-render-1.png"
+            alt="Villa Luxury con Piscina"
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-6">
+            <p className="text-white/70 text-sm font-medium mb-1">Sardegna, Italia</p>
+            <h3 className="text-white text-xl font-bold">Villa Aurora</h3>
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-amber-400 text-sm">★ 4.97</span>
+              <span className="text-white/60 text-sm">· 6 ospiti · Piscina</span>
+            </div>
+            <p className="text-white font-bold mt-2">€ 380 <span className="text-white/60 font-normal text-sm">/ notte</span></p>
+          </div>
+        </div>
+
+        {/* ── Back: Villa 2 ── */}
+        <div
+          className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl shadow-black/20"
+          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+        >
+          <Image
+            src="/images/villa-render-2.jpg"
+            alt="Villa Moderna sul Mare"
+            fill
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-6">
+            <p className="text-white/70 text-sm font-medium mb-1">Costiera Amalfitana</p>
+            <h3 className="text-white text-xl font-bold">Villa Belvedere</h3>
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-amber-400 text-sm">★ 4.92</span>
+              <span className="text-white/60 text-sm">· 8 ospiti · Vista mare</span>
+            </div>
+            <p className="text-white font-bold mt-2">€ 520 <span className="text-white/60 font-normal text-sm">/ notte</span></p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -370,15 +328,15 @@ export default function ComeFunzionaPage() {
               </div>
             </div>
 
-            {/* Right — 3D Villa */}
+            {/* Right — Flip Card */}
             <div className={`flex-1 min-h-[350px] lg:min-h-[450px] flex items-center justify-center ${hero.inView ? "animate-scaleIn delay-200" : "opacity-0"}`}>
-              <Villa3D />
+              <VillaFlipCard />
             </div>
           </div>
 
           {/* Interactive hint */}
           <p className={`text-center text-xs text-neutral-400 mt-4 lg:mt-8 ${hero.inView ? "animate-slideUp delay-500" : "opacity-0"}`}>
-            Esplora il diorama 3D della villa — trascina per ruotare
+            Clicca sulla card per scoprire un&apos;altra villa
           </p>
         </div>
       </section>
