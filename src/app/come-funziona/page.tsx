@@ -107,35 +107,95 @@ function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: str
 
 /* ═══════════════ 3D Villa (Three.js) ═══════════════ */
 
+interface PieceData {
+  mesh: THREE.Object3D;
+  targetPos: THREE.Vector3;
+  startPos: THREE.Vector3;
+  delay: number;
+}
+
 function VillaModel() {
   const { scene, animations } = useGLTF("/models/villa.glb");
   const groupRef = useRef<THREE.Group>(null);
   const { actions } = useAnimations(animations, groupRef);
+  const piecesRef = useRef<PieceData[]>([]);
+  const animStartRef = useRef(0);
+  const assembledRef = useRef(false);
 
-  useEffect(() => {
-    // Play all animations
-    Object.values(actions).forEach((action) => {
-      action?.play();
-    });
-  }, [actions]);
-
-  // Center and scale model
+  // Center, scale, and prepare assembly animation
   useEffect(() => {
     const box = new THREE.Box3().setFromObject(scene);
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
-    const scale = 4 / maxDim;
+    const scale = 5.5 / maxDim;
     scene.scale.setScalar(scale);
-    scene.position.set(-center.x * scale, -center.y * scale + 0.5, -center.z * scale);
+    scene.position.set(-center.x * scale, -center.y * scale + 0.3, -center.z * scale);
+
+    // Collect all mesh children for assembly animation
+    const pieces: PieceData[] = [];
+    let idx = 0;
+    scene.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        const targetPos = child.position.clone();
+        // Scatter pieces: random offset below + outward
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 3 + Math.random() * 5;
+        const startPos = new THREE.Vector3(
+          targetPos.x + Math.cos(angle) * radius,
+          targetPos.y - 4 - Math.random() * 6,
+          targetPos.z + Math.sin(angle) * radius
+        );
+        child.position.copy(startPos);
+
+        // Stagger delay based on height (bottom pieces first, roof last)
+        const heightRatio = (targetPos.y - box.min.y) / size.y;
+        const delay = heightRatio * 2.0 + Math.random() * 0.3;
+
+        pieces.push({ mesh: child, targetPos, startPos, delay });
+        idx++;
+      }
+    });
+
+    piecesRef.current = pieces;
+    animStartRef.current = 0;
+    assembledRef.current = false;
   }, [scene]);
+
+  // Animate assembly each frame
+  useFrame((_, delta) => {
+    if (assembledRef.current) return;
+
+    animStartRef.current += delta;
+    const elapsed = animStartRef.current;
+    const duration = 1.2; // Each piece takes 1.2s to fly in
+    let allDone = true;
+
+    for (const piece of piecesRef.current) {
+      const t = Math.max(0, Math.min(1, (elapsed - piece.delay) / duration));
+      if (t < 1) allDone = false;
+
+      // Smooth ease-out cubic
+      const eased = 1 - Math.pow(1 - t, 3);
+
+      piece.mesh.position.lerpVectors(piece.startPos, piece.targetPos, eased);
+    }
+
+    if (allDone && !assembledRef.current) {
+      assembledRef.current = true;
+      // Start character animations after assembly
+      Object.values(actions).forEach((action) => {
+        action?.play();
+      });
+    }
+  });
 
   return <primitive ref={groupRef} object={scene} />;
 }
 
 function Villa3D() {
   return (
-    <div className="w-full h-[350px] lg:h-[450px] cursor-grab active:cursor-grabbing">
+    <div className="w-full h-[400px] lg:h-[520px] cursor-grab active:cursor-grabbing">
       <Canvas
         camera={{ position: [6, 2.5, 6], fov: 35 }}
         gl={{ antialias: true, alpha: true }}
