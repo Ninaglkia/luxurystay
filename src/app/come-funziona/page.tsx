@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { OrbitControls, useGLTF, Environment, useAnimations } from "@react-three/drei";
+import * as THREE from "three";
 
 /* ═══════════════ Intersection Observer Hook ═══════════════ */
 
@@ -102,381 +105,58 @@ function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: str
   return <span ref={ref}>{count.toLocaleString("it-IT")}{suffix}</span>;
 }
 
-/* ═══════════════ 3D Villa ═══════════════ */
+/* ═══════════════ 3D Villa (Three.js) ═══════════════ */
 
-function Villa3D() {
-  const sceneRef = useRef<HTMLDivElement>(null);
-  const rotationRef = useRef({ x: -25, y: -35 });
-  const autoRotateRef = useRef(true);
-  const rafRef = useRef<number>(0);
+function VillaModel() {
+  const { scene, animations } = useGLTF("/models/villa.glb");
+  const groupRef = useRef<THREE.Group>(null);
+  const { actions } = useAnimations(animations, groupRef);
 
   useEffect(() => {
-    let angle = -35;
-    function autoRotate() {
-      if (!autoRotateRef.current || !sceneRef.current) {
-        rafRef.current = requestAnimationFrame(autoRotate);
-        return;
-      }
-      angle += 0.15;
-      rotationRef.current.y = angle;
-      sceneRef.current.style.transform =
-        `rotateX(${rotationRef.current.x}deg) rotateY(${angle}deg)`;
-      rafRef.current = requestAnimationFrame(autoRotate);
-    }
-    rafRef.current = requestAnimationFrame(autoRotate);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, []);
+    // Play all animations
+    Object.values(actions).forEach((action) => {
+      action?.play();
+    });
+  }, [actions]);
 
-  function handleMouseMove(e: React.MouseEvent) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    autoRotateRef.current = false;
-    if (sceneRef.current) {
-      rotationRef.current = { x: -25 + y * -20, y: -35 + x * 60 };
-      sceneRef.current.style.transform =
-        `rotateX(${rotationRef.current.x}deg) rotateY(${rotationRef.current.y}deg)`;
-    }
-  }
+  // Center and scale model
+  useEffect(() => {
+    const box = new THREE.Box3().setFromObject(scene);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const scale = 4 / maxDim;
+    scene.scale.setScalar(scale);
+    scene.position.set(-center.x * scale, -center.y * scale + 0.5, -center.z * scale);
+  }, [scene]);
 
-  function handleMouseLeave() {
-    autoRotateRef.current = true;
-  }
+  return <primitive ref={groupRef} object={scene} />;
+}
 
+function Villa3D() {
   return (
-    <div
-      className="w-full flex items-center justify-center cursor-grab active:cursor-grabbing"
-      style={{ perspective: "1200px", perspectiveOrigin: "50% 40%" }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-    >
-      {/* Scene */}
-      <div
-        ref={sceneRef}
-        className="relative transition-transform duration-100"
-        style={{
-          transformStyle: "preserve-3d",
-          transform: "rotateX(-25deg) rotateY(-35deg)",
-          width: 340, height: 240,
-        }}
+    <div className="w-full h-[350px] lg:h-[450px] cursor-grab active:cursor-grabbing">
+      <Canvas
+        camera={{ position: [5, 4, 5], fov: 40 }}
+        gl={{ antialias: true, alpha: true }}
+        style={{ background: "transparent" }}
       >
-        {/* ══ GROUND / GARDEN ══ */}
-        <div style={{
-          position: "absolute", width: 420, height: 380, left: -40, top: 60,
-          background: "linear-gradient(135deg, #86efac 0%, #4ade80 40%, #22c55e 100%)",
-          transform: "rotateX(90deg) translateZ(-60px)",
-          transformStyle: "preserve-3d",
-          borderRadius: 16,
-          boxShadow: "0 0 80px rgba(34,197,94,0.3)",
-        }}>
-          {/* Grass texture lines */}
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} style={{
-              position: "absolute", top: 20 + i * 44, left: 20, right: 20, height: 1,
-              background: "rgba(22,163,74,0.2)",
-            }} />
-          ))}
-          {/* Garden path */}
-          <div style={{
-            position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)",
-            width: 50, height: 120,
-            background: "linear-gradient(180deg, #d6d3d1 0%, #a8a29e 100%)",
-            borderRadius: "8px 8px 0 0",
-          }} />
-        </div>
-
-        {/* ══ POOL ══ */}
-        <div style={{
-          position: "absolute", width: 120, height: 80,
-          left: -30, top: 120,
-          transform: "rotateX(90deg) translateZ(-58px)",
-          background: "linear-gradient(135deg, #67e8f9 0%, #22d3ee 30%, #06b6d4 70%, #0891b2 100%)",
-          borderRadius: 12,
-          boxShadow: "inset 0 2px 20px rgba(6,182,212,0.5), 0 0 40px rgba(34,211,238,0.3)",
-          border: "3px solid #e7e5e4",
-        }}>
-          {/* Water ripples */}
-          <div style={{
-            position: "absolute", inset: 8, borderRadius: 8,
-            background: "repeating-linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 25%, transparent 50%)",
-            animation: "waterRipple 3s linear infinite",
-          }} />
-        </div>
-
-        {/* ══ MAIN BUILDING — FRONT WALL ══ */}
-        <div style={{
-          position: "absolute", width: 260, height: 140, left: 40, top: 50,
-          background: "linear-gradient(180deg, #fafaf9 0%, #f5f5f4 60%, #e7e5e4 100%)",
-          transform: "translateZ(60px)",
-          boxShadow: "inset -2px 0 8px rgba(0,0,0,0.05)",
-          borderBottom: "3px solid #d6d3d1",
-        }}>
-          {/* Door */}
-          <div style={{
-            position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)",
-            width: 36, height: 60,
-            background: "linear-gradient(180deg, #78350f 0%, #92400e 50%, #78350f 100%)",
-            borderRadius: "6px 6px 0 0",
-            boxShadow: "inset -3px 0 6px rgba(0,0,0,0.3), 0 0 12px rgba(120,53,15,0.2)",
-          }}>
-            {/* Door handle */}
-            <div style={{
-              position: "absolute", right: 6, top: "50%",
-              width: 4, height: 4, borderRadius: "50%",
-              background: "#fbbf24",
-              boxShadow: "0 0 6px rgba(251,191,36,0.6)",
-            }} />
-            {/* Door arch */}
-            <div style={{
-              position: "absolute", top: -1, left: -1, right: -1, height: 8,
-              background: "#78350f",
-              borderRadius: "6px 6px 0 0",
-            }} />
-          </div>
-
-          {/* Windows row 1 */}
-          {[0, 1, 2].map(i => i !== 1 && (
-            <div key={i} style={{
-              position: "absolute", bottom: 18,
-              left: i === 0 ? 28 : undefined,
-              right: i === 2 ? 28 : undefined,
-              width: 40, height: 45,
-              background: "linear-gradient(180deg, #bfdbfe 0%, #93c5fd 40%, #60a5fa 100%)",
-              borderRadius: 4,
-              border: "3px solid #e7e5e4",
-              boxShadow: "inset 0 0 10px rgba(96,165,250,0.3), 0 0 8px rgba(96,165,250,0.15)",
-            }}>
-              {/* Window cross */}
-              <div style={{ position: "absolute", top: 0, bottom: 0, left: "50%", width: 2, background: "#d6d3d1" }} />
-              <div style={{ position: "absolute", left: 0, right: 0, top: "50%", height: 2, background: "#d6d3d1" }} />
-              {/* Reflection */}
-              <div style={{
-                position: "absolute", top: 3, left: 3, width: 12, height: 8,
-                background: "rgba(255,255,255,0.5)", borderRadius: 2,
-              }} />
-            </div>
-          ))}
-
-          {/* Upper windows */}
-          {[0, 1, 2].map(i => (
-            <div key={`u${i}`} style={{
-              position: "absolute", top: 18,
-              left: i === 0 ? 28 : i === 1 ? 110 : undefined,
-              right: i === 2 ? 28 : undefined,
-              width: 40, height: 35,
-              background: "linear-gradient(180deg, #bfdbfe 0%, #93c5fd 50%, #60a5fa 100%)",
-              borderRadius: 4,
-              border: "3px solid #e7e5e4",
-              boxShadow: "inset 0 0 10px rgba(96,165,250,0.3)",
-            }}>
-              <div style={{ position: "absolute", top: 0, bottom: 0, left: "50%", width: 2, background: "#d6d3d1" }} />
-              <div style={{ position: "absolute", left: 0, right: 0, top: "50%", height: 2, background: "#d6d3d1" }} />
-              <div style={{ position: "absolute", top: 3, left: 3, width: 10, height: 6, background: "rgba(255,255,255,0.45)", borderRadius: 2 }} />
-            </div>
-          ))}
-        </div>
-
-        {/* ══ BACK WALL ══ */}
-        <div style={{
-          position: "absolute", width: 260, height: 140, left: 40, top: 50,
-          background: "linear-gradient(180deg, #e7e5e4 0%, #d6d3d1 100%)",
-          transform: "translateZ(-60px)",
-        }} />
-
-        {/* ══ LEFT WALL ══ */}
-        <div style={{
-          position: "absolute", width: 120, height: 140, left: 40, top: 50,
-          background: "linear-gradient(180deg, #e7e5e4 0%, #d6d3d1 60%, #c7c5c3 100%)",
-          transform: "rotateY(-90deg) translateZ(0px)",
-          transformOrigin: "left center",
-        }}>
-          {/* Side windows */}
-          {[0, 1].map(i => (
-            <div key={`s${i}`} style={{
-              position: "absolute",
-              top: i === 0 ? 18 : undefined,
-              bottom: i === 1 ? 18 : undefined,
-              left: 20, width: 35, height: i === 0 ? 35 : 45,
-              background: "linear-gradient(180deg, #93c5fd 0%, #60a5fa 100%)",
-              borderRadius: 4, border: "3px solid #d6d3d1",
-              boxShadow: "inset 0 0 8px rgba(96,165,250,0.3)",
-            }}>
-              <div style={{ position: "absolute", top: 0, bottom: 0, left: "50%", width: 2, background: "#c7c5c3" }} />
-              <div style={{ position: "absolute", left: 0, right: 0, top: "50%", height: 2, background: "#c7c5c3" }} />
-            </div>
-          ))}
-          {/* Side window right */}
-          <div style={{
-            position: "absolute", top: 60, right: 18,
-            width: 30, height: 40,
-            background: "linear-gradient(180deg, #93c5fd 0%, #60a5fa 100%)",
-            borderRadius: 4, border: "3px solid #d6d3d1",
-          }}>
-            <div style={{ position: "absolute", top: 0, bottom: 0, left: "50%", width: 2, background: "#c7c5c3" }} />
-          </div>
-        </div>
-
-        {/* ══ RIGHT WALL ══ */}
-        <div style={{
-          position: "absolute", width: 120, height: 140, left: 40, top: 50,
-          background: "linear-gradient(180deg, #f5f5f4 0%, #e7e5e4 60%, #d6d3d1 100%)",
-          transform: "rotateY(-90deg) translateZ(-260px)",
-          transformOrigin: "left center",
-        }}>
-          {[0, 1].map(i => (
-            <div key={`r${i}`} style={{
-              position: "absolute",
-              top: i === 0 ? 18 : undefined,
-              bottom: i === 1 ? 18 : undefined,
-              left: 25, width: 35, height: i === 0 ? 35 : 45,
-              background: "linear-gradient(180deg, #bfdbfe 0%, #93c5fd 50%, #60a5fa 100%)",
-              borderRadius: 4, border: "3px solid #e7e5e4",
-              boxShadow: "inset 0 0 8px rgba(96,165,250,0.3)",
-            }}>
-              <div style={{ position: "absolute", top: 0, bottom: 0, left: "50%", width: 2, background: "#d6d3d1" }} />
-              <div style={{ position: "absolute", left: 0, right: 0, top: "50%", height: 2, background: "#d6d3d1" }} />
-            </div>
-          ))}
-        </div>
-
-        {/* ══ ROOF ══ */}
-        {/* Roof - front slope */}
-        <div style={{
-          position: "absolute", width: 280, height: 85, left: 30, top: 5,
-          background: "linear-gradient(180deg, #b45309 0%, #92400e 40%, #78350f 100%)",
-          transform: "rotateX(35deg) translateZ(40px)",
-          transformOrigin: "bottom center",
-          borderRadius: "4px 4px 0 0",
-          boxShadow: "0 -4px 20px rgba(180,83,9,0.3)",
-        }}>
-          {/* Roof tiles pattern */}
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} style={{
-              position: "absolute", left: 0, right: 0,
-              top: 8 + i * 16, height: 1,
-              background: "rgba(120,53,15,0.4)",
-            }} />
-          ))}
-        </div>
-        {/* Roof - back slope */}
-        <div style={{
-          position: "absolute", width: 280, height: 85, left: 30, top: 5,
-          background: "linear-gradient(180deg, #78350f 0%, #713f12 100%)",
-          transform: "rotateX(-35deg) translateZ(-40px)",
-          transformOrigin: "bottom center",
-          borderRadius: "4px 4px 0 0",
-        }} />
-        {/* Roof ridge cap */}
-        <div style={{
-          position: "absolute", width: 280, height: 8, left: 30, top: -4,
-          background: "linear-gradient(180deg, #d97706 0%, #b45309 100%)",
-          transform: "translateZ(0px)",
-          borderRadius: 4,
-          boxShadow: "0 2px 8px rgba(217,119,6,0.3)",
-        }} />
-
-        {/* ══ CHIMNEY ══ */}
-        <div style={{
-          position: "absolute", width: 20, height: 35, left: 240, top: -20,
-          transformStyle: "preserve-3d",
-        }}>
-          {/* Chimney front */}
-          <div style={{
-            position: "absolute", width: 20, height: 35,
-            background: "linear-gradient(180deg, #dc2626 0%, #b91c1c 100%)",
-            transform: "translateZ(8px)",
-            borderRadius: "2px 2px 0 0",
-          }} />
-          {/* Chimney side */}
-          <div style={{
-            position: "absolute", width: 16, height: 35,
-            background: "#991b1b",
-            transform: "rotateY(-90deg) translateZ(-2px)",
-            transformOrigin: "left center",
-          }} />
-          {/* Chimney top */}
-          <div style={{
-            position: "absolute", width: 24, height: 18, left: -2, top: -2,
-            background: "#7f1d1d",
-            transform: "rotateX(90deg) translateZ(17px)",
-            borderRadius: 2,
-          }} />
-          {/* Smoke */}
-          <div style={{
-            position: "absolute", width: 8, height: 8, left: 6, top: -14,
-            background: "rgba(163,163,163,0.4)", borderRadius: "50%",
-            animation: "smokeRise 3s ease-out infinite",
-          }} />
-          <div style={{
-            position: "absolute", width: 6, height: 6, left: 9, top: -10,
-            background: "rgba(163,163,163,0.3)", borderRadius: "50%",
-            animation: "smokeRise 3s ease-out 1s infinite",
-          }} />
-        </div>
-
-        {/* ══ TERRACE / PORCH ══ */}
-        <div style={{
-          position: "absolute", width: 100, height: 40, left: 120, top: 168,
-          transform: "rotateX(90deg) translateZ(-22px)",
-          background: "linear-gradient(135deg, #d6d3d1 0%, #a8a29e 100%)",
-          borderRadius: 4,
-          border: "2px solid #c7c5c3",
-        }} />
-        {/* Porch columns */}
-        {[0, 1].map(i => (
-          <div key={`col${i}`} style={{
-            position: "absolute",
-            left: i === 0 ? 125 : 210,
-            top: 148, width: 6, height: 42,
-            background: "linear-gradient(90deg, #f5f5f4, #e7e5e4)",
-            transform: "translateZ(78px)",
-            borderRadius: 3,
-            boxShadow: "2px 0 4px rgba(0,0,0,0.1)",
-          }} />
-        ))}
-
-        {/* ══ TREES ══ */}
-        {[
-          { x: -20, z: 35, s: 1 },
-          { x: 310, z: 25, s: 0.85 },
-          { x: 320, z: -30, s: 0.7 },
-        ].map((tree, i) => (
-          <div key={`tree${i}`} style={{
-            position: "absolute", left: tree.x, top: 70,
-            transformStyle: "preserve-3d",
-            transform: `translateZ(${tree.z}px) scale(${tree.s})`,
-          }}>
-            {/* Trunk */}
-            <div style={{
-              width: 10, height: 50, margin: "0 auto",
-              background: "linear-gradient(90deg, #92400e, #78350f)",
-              borderRadius: 3,
-            }} />
-            {/* Foliage layers */}
-            {[0, 1, 2].map(j => (
-              <div key={j} style={{
-                position: "absolute",
-                left: "50%",
-                top: -10 - j * 18,
-                transform: "translateX(-50%)",
-                width: 50 - j * 8,
-                height: 30 - j * 4,
-                background: `linear-gradient(180deg, ${j === 0 ? "#22c55e" : j === 1 ? "#16a34a" : "#15803d"} 0%, ${j === 0 ? "#16a34a" : j === 1 ? "#15803d" : "#166534"} 100%)`,
-                borderRadius: "50% 50% 50% 50% / 60% 60% 40% 40%",
-                boxShadow: j === 0 ? "0 4px 12px rgba(22,163,74,0.3)" : "none",
-              }} />
-            ))}
-          </div>
-        ))}
-
-        {/* ══ SHADOW ══ */}
-        <div style={{
-          position: "absolute", width: 300, height: 140, left: 50, top: 120,
-          background: "radial-gradient(ellipse, rgba(0,0,0,0.15) 0%, transparent 70%)",
-          transform: "rotateX(90deg) translateZ(-62px)",
-          filter: "blur(8px)",
-        }} />
-      </div>
+        <ambientLight intensity={0.6} />
+        <directionalLight position={[8, 10, 5]} intensity={1.2} castShadow />
+        <directionalLight position={[-5, 5, -5]} intensity={0.4} />
+        <Suspense fallback={null}>
+          <VillaModel />
+          <Environment preset="city" />
+        </Suspense>
+        <OrbitControls
+          autoRotate
+          autoRotateSpeed={1.5}
+          enableZoom={false}
+          enablePan={false}
+          minPolarAngle={Math.PI / 4}
+          maxPolarAngle={Math.PI / 2.2}
+        />
+      </Canvas>
     </div>
   );
 }
@@ -636,7 +316,7 @@ export default function ComeFunzionaPage() {
 
           {/* Interactive hint */}
           <p className={`text-center text-xs text-neutral-400 mt-4 lg:mt-8 ${hero.inView ? "animate-slideUp delay-500" : "opacity-0"}`}>
-            Muovi il mouse sulla villa per ruotarla in 3D
+            Trascina per ruotare la villa in 3D
           </p>
         </div>
       </section>
