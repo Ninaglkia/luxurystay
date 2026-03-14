@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { OrbitControls, Environment } from "@react-three/drei";
+import * as THREE from "three";
 
 /* ═══════════════ Intersection Observer Hook ═══════════════ */
 
@@ -103,104 +105,162 @@ function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: str
   return <span ref={ref}>{count.toLocaleString("it-IT")}{suffix}</span>;
 }
 
-/* ═══════════════ Airbnb-style 3D Disc Flip ═══════════════ */
+/* ═══════════════ Three.js Villa 3D ═══════════════ */
 
-function VillaFlipCard() {
-  const [flipped, setFlipped] = useState(false);
+function VillaScene() {
+  const groupRef = useRef<THREE.Group>(null);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFlipped((prev) => !prev);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  useFrame((_, delta) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y += delta * 0.3;
+    }
+  });
 
   return (
-    <div className="flex flex-col items-center gap-6">
-      {/* 3D Scene Container */}
-      <div
-        className="relative w-[320px] h-[320px] lg:w-[400px] lg:h-[400px] cursor-pointer"
-        style={{ perspective: "1200px" }}
-        onClick={() => setFlipped((prev) => !prev)}
-      >
-        {/* Flipper */}
-        <div
-          className="relative w-full h-full"
-          style={{
-            transformStyle: "preserve-3d",
-            transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
-            transition: "transform 1.2s cubic-bezier(0.25, 1, 0.5, 1)",
-          }}
-        >
-          {/* ── Front: Villa ── */}
-          <div
-            className="absolute inset-0 flex items-center justify-center"
-            style={{ backfaceVisibility: "hidden" }}
-          >
-            {/* White disc platform */}
-            <div
-              className="absolute bottom-[15%] w-[85%] h-[40%] rounded-[50%]"
-              style={{
-                background: "radial-gradient(ellipse, #ffffff 0%, #f5f5f5 60%, #e8e8e8 100%)",
-                boxShadow: "0 8px 40px rgba(0,0,0,0.12), 0 2px 10px rgba(0,0,0,0.08)",
-              }}
-            />
-            {/* Villa image - floating on disc */}
-            <div className="relative w-[90%] h-[90%] -mt-[10%]">
-              <Image
-                src="/images/villa-render-1.png"
-                alt="Villa Luxury con Piscina"
-                fill
-                className="object-contain drop-shadow-2xl"
-                priority
-              />
-            </div>
-          </div>
+    <group ref={groupRef}>
+      {/* ── Ground / Garden ── */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
+        <circleGeometry args={[4, 64]} />
+        <meshStandardMaterial color="#4ade80" roughness={0.9} />
+      </mesh>
 
-          {/* ── Back: Villa 2 ── */}
-          <div
-            className="absolute inset-0 flex items-center justify-center"
-            style={{
-              backfaceVisibility: "hidden",
-              transform: "rotateY(180deg)",
-            }}
-          >
-            {/* White disc platform */}
-            <div
-              className="absolute bottom-[15%] w-[85%] h-[40%] rounded-[50%]"
-              style={{
-                background: "radial-gradient(ellipse, #ffffff 0%, #f5f5f5 60%, #e8e8e8 100%)",
-                boxShadow: "0 8px 40px rgba(0,0,0,0.12), 0 2px 10px rgba(0,0,0,0.08)",
-              }}
-            />
-            {/* Villa 2 image */}
-            <div className="relative w-[90%] h-[90%] -mt-[10%]">
-              <Image
-                src="/images/villa-render-2.jpg"
-                alt="Villa Moderna sul Mare"
-                fill
-                className="object-contain drop-shadow-2xl"
-              />
-            </div>
-          </div>
-        </div>
+      {/* ── Main Building ── */}
+      <group position={[0, 0, 0]}>
+        {/* Base / Ground floor */}
+        <mesh position={[0, 0.6, 0]} castShadow>
+          <boxGeometry args={[3, 1.2, 2.4]} />
+          <meshStandardMaterial color="#fafaf9" roughness={0.3} />
+        </mesh>
+        {/* Upper floor */}
+        <mesh position={[0.3, 1.6, 0]} castShadow>
+          <boxGeometry args={[2.6, 0.8, 2.2]} />
+          <meshStandardMaterial color="#f5f5f4" roughness={0.3} />
+        </mesh>
+        {/* Roof - flat modern */}
+        <mesh position={[0.3, 2.1, 0]} castShadow>
+          <boxGeometry args={[2.8, 0.08, 2.4]} />
+          <meshStandardMaterial color="#44403c" roughness={0.5} />
+        </mesh>
 
-        {/* Shadow on ground */}
-        <div
-          className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-[70%] h-[20px] rounded-[50%]"
-          style={{
-            background: "radial-gradient(ellipse, rgba(0,0,0,0.15) 0%, transparent 70%)",
-            filter: "blur(6px)",
-            transition: "transform 1.2s cubic-bezier(0.25, 1, 0.5, 1)",
-            transform: flipped ? "scaleX(0.6)" : "scaleX(1)",
-          }}
-        />
-      </div>
+        {/* ── Windows ground floor ── */}
+        {[-0.8, 0.8].map((x, i) => (
+          <mesh key={`gw${i}`} position={[x, 0.5, 1.21]}>
+            <boxGeometry args={[0.5, 0.6, 0.02]} />
+            <meshStandardMaterial color="#93c5fd" roughness={0.1} metalness={0.3} />
+          </mesh>
+        ))}
+        {/* Big glass door center */}
+        <mesh position={[0, 0.45, 1.21]}>
+          <boxGeometry args={[0.7, 0.9, 0.02]} />
+          <meshStandardMaterial color="#60a5fa" roughness={0.05} metalness={0.5} transparent opacity={0.7} />
+        </mesh>
+        {/* Windows upper floor */}
+        {[-0.2, 0.8].map((x, i) => (
+          <mesh key={`uw${i}`} position={[x, 1.55, 1.11]}>
+            <boxGeometry args={[0.45, 0.5, 0.02]} />
+            <meshStandardMaterial color="#93c5fd" roughness={0.1} metalness={0.3} />
+          </mesh>
+        ))}
 
-      {/* Label */}
-      <p className="text-lg font-semibold text-neutral-900 transition-opacity duration-500">
-        {flipped ? "Modalità host" : "Modalità viaggio"}
-      </p>
+        {/* ── Balcony ── */}
+        <mesh position={[-0.9, 1.2, 1.3]} castShadow>
+          <boxGeometry args={[1, 0.06, 0.6]} />
+          <meshStandardMaterial color="#e7e5e4" roughness={0.4} />
+        </mesh>
+        {/* Balcony railing */}
+        <mesh position={[-0.9, 1.4, 1.59]}>
+          <boxGeometry args={[1, 0.35, 0.03]} />
+          <meshStandardMaterial color="#d4d4d8" transparent opacity={0.5} roughness={0.2} />
+        </mesh>
+
+        {/* ── Terrace / Deck ── */}
+        <mesh position={[0, 0.01, 1.8]} receiveShadow>
+          <boxGeometry args={[3, 0.04, 1]} />
+          <meshStandardMaterial color="#a8896c" roughness={0.8} />
+        </mesh>
+      </group>
+
+      {/* ── Pool ── */}
+      <group position={[-1.8, 0, 0.5]}>
+        {/* Pool walls */}
+        <mesh position={[0, 0.15, 0]}>
+          <boxGeometry args={[1.6, 0.35, 1]} />
+          <meshStandardMaterial color="#e7e5e4" roughness={0.4} />
+        </mesh>
+        {/* Water */}
+        <mesh position={[0, 0.25, 0]}>
+          <boxGeometry args={[1.4, 0.15, 0.85]} />
+          <meshStandardMaterial color="#22d3ee" roughness={0.05} metalness={0.1} transparent opacity={0.85} />
+        </mesh>
+      </group>
+
+      {/* ── Trees ── */}
+      {[
+        { pos: [2.2, 0, -1.2] as [number, number, number], s: 1 },
+        { pos: [2.5, 0, 0.8] as [number, number, number], s: 0.8 },
+        { pos: [-1, 0, -1.8] as [number, number, number], s: 1.1 },
+      ].map((tree, i) => (
+        <group key={`tree${i}`} position={tree.pos} scale={tree.s}>
+          {/* Trunk */}
+          <mesh position={[0, 0.5, 0]} castShadow>
+            <cylinderGeometry args={[0.06, 0.08, 1, 8]} />
+            <meshStandardMaterial color="#78350f" roughness={0.9} />
+          </mesh>
+          {/* Foliage */}
+          <mesh position={[0, 1.2, 0]} castShadow>
+            <sphereGeometry args={[0.45, 16, 12]} />
+            <meshStandardMaterial color="#16a34a" roughness={0.8} />
+          </mesh>
+          <mesh position={[0.15, 1.5, 0.1]} castShadow>
+            <sphereGeometry args={[0.3, 12, 10]} />
+            <meshStandardMaterial color="#22c55e" roughness={0.8} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* ── Bushes around pool ── */}
+      {[
+        [-2.8, 0.2, 0.5],
+        [-2.8, 0.2, -0.2],
+        [1.6, 0.15, 1.8],
+      ].map((pos, i) => (
+        <mesh key={`bush${i}`} position={pos as [number, number, number]} castShadow>
+          <sphereGeometry args={[0.2, 10, 8]} />
+          <meshStandardMaterial color="#15803d" roughness={0.9} />
+        </mesh>
+      ))}
+
+      {/* ── Lounge chairs on deck ── */}
+      {[0.6, -0.4].map((x, i) => (
+        <group key={`chair${i}`} position={[x, 0.08, 2]}>
+          <mesh>
+            <boxGeometry args={[0.3, 0.04, 0.6]} />
+            <meshStandardMaterial color="#fef3c7" roughness={0.6} />
+          </mesh>
+          {/* Backrest */}
+          <mesh position={[0, 0.1, -0.25]} rotation={[0.4, 0, 0]}>
+            <boxGeometry args={[0.3, 0.04, 0.25]} />
+            <meshStandardMaterial color="#fef3c7" roughness={0.6} />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function Villa3D() {
+  return (
+    <div className="w-full h-[400px] lg:h-[500px] cursor-grab active:cursor-grabbing">
+      <Canvas camera={{ position: [6, 4, 6], fov: 35 }} gl={{ antialias: true, alpha: true }} style={{ background: "transparent" }}>
+        <ambientLight intensity={0.7} />
+        <directionalLight position={[8, 10, 5]} intensity={1.5} castShadow shadow-mapSize={1024} />
+        <directionalLight position={[-5, 5, -5]} intensity={0.4} />
+        <Suspense fallback={null}>
+          <VillaScene />
+          <Environment preset="sunset" />
+        </Suspense>
+        <OrbitControls enableZoom={false} enablePan={false} minPolarAngle={Math.PI / 5} maxPolarAngle={Math.PI / 2.5} />
+      </Canvas>
     </div>
   );
 }
@@ -354,7 +414,7 @@ export default function ComeFunzionaPage() {
 
             {/* Right — Flip Card */}
             <div className={`flex-1 min-h-[350px] lg:min-h-[450px] flex items-center justify-center ${hero.inView ? "animate-scaleIn delay-200" : "opacity-0"}`}>
-              <VillaFlipCard />
+              <Villa3D />
             </div>
           </div>
 
