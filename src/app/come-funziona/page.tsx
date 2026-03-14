@@ -103,12 +103,10 @@ function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: str
   return <span ref={ref}>{count.toLocaleString("it-IT")}{suffix}</span>;
 }
 
-/* ═══════════════ 3D Flip Card with Depth ═══════════════ */
+/* ═══════════════ Airbnb-style 3D Disc Flip ═══════════════ */
 
 function VillaFlipCard() {
   const [flipped, setFlipped] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const mouseRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -117,142 +115,92 @@ function VillaFlipCard() {
     return () => clearInterval(interval);
   }, []);
 
-  function handleMouseMove(e: React.MouseEvent) {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    mouseRef.current = { x, y };
-    const tiltX = y * -15;
-    const tiltY = x * 15;
-    const flipY = flipped ? 180 : 0;
-    cardRef.current.style.transform =
-      `rotateX(${tiltX}deg) rotateY(${flipY + tiltY}deg)`;
-  }
-
-  function handleMouseLeave() {
-    if (!cardRef.current) return;
-    const flipY = flipped ? 180 : 0;
-    cardRef.current.style.transform = `rotateX(0deg) rotateY(${flipY}deg)`;
-  }
-
-  const thickness = 12;
-
   return (
-    <div
-      className="w-[340px] h-[420px] lg:w-[400px] lg:h-[480px] cursor-pointer"
-      style={{ perspective: "1000px", perspectiveOrigin: "50% 50%" }}
-      onClick={() => setFlipped((prev) => !prev)}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-    >
+    <div className="flex flex-col items-center gap-6">
+      {/* 3D Scene Container */}
       <div
-        ref={cardRef}
-        className="relative w-full h-full"
-        style={{
-          transformStyle: "preserve-3d",
-          transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
-          transition: "transform 1s cubic-bezier(0.4, 0, 0.2, 1)",
-        }}
+        className="relative w-[320px] h-[320px] lg:w-[400px] lg:h-[400px] cursor-pointer"
+        style={{ perspective: "1200px" }}
+        onClick={() => setFlipped((prev) => !prev)}
       >
-        {/* ── Front Face ── */}
+        {/* Flipper */}
         <div
-          className="absolute inset-0 rounded-3xl overflow-hidden"
+          className="relative w-full h-full"
           style={{
-            backfaceVisibility: "hidden",
-            transform: `translateZ(${thickness / 2}px)`,
-            boxShadow: "0 25px 60px -12px rgba(0,0,0,0.4)",
+            transformStyle: "preserve-3d",
+            transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+            transition: "transform 1.2s cubic-bezier(0.25, 1, 0.5, 1)",
           }}
         >
-          <Image
-            src="/images/villa-render-1.png"
-            alt="Villa Luxury con Piscina"
-            fill
-            className="object-cover"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-6">
-            <p className="text-white/70 text-sm font-medium mb-1">Sardegna, Italia</p>
-            <h3 className="text-white text-2xl font-bold">Villa Aurora</h3>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-amber-400 text-sm">★ 4.97</span>
-              <span className="text-white/60 text-sm">· 6 ospiti · Piscina</span>
+          {/* ── Front: Villa ── */}
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ backfaceVisibility: "hidden" }}
+          >
+            {/* White disc platform */}
+            <div
+              className="absolute bottom-[15%] w-[85%] h-[40%] rounded-[50%]"
+              style={{
+                background: "radial-gradient(ellipse, #ffffff 0%, #f5f5f5 60%, #e8e8e8 100%)",
+                boxShadow: "0 8px 40px rgba(0,0,0,0.12), 0 2px 10px rgba(0,0,0,0.08)",
+              }}
+            />
+            {/* Villa image - floating on disc */}
+            <div className="relative w-[90%] h-[90%] -mt-[10%]">
+              <Image
+                src="/images/villa-render-1.png"
+                alt="Villa Luxury con Piscina"
+                fill
+                className="object-contain drop-shadow-2xl"
+                priority
+              />
             </div>
-            <p className="text-white font-bold text-lg mt-2">€ 380 <span className="text-white/60 font-normal text-sm">/ notte</span></p>
+          </div>
+
+          {/* ── Back: Villa 2 ── */}
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{
+              backfaceVisibility: "hidden",
+              transform: "rotateY(180deg)",
+            }}
+          >
+            {/* White disc platform */}
+            <div
+              className="absolute bottom-[15%] w-[85%] h-[40%] rounded-[50%]"
+              style={{
+                background: "radial-gradient(ellipse, #ffffff 0%, #f5f5f5 60%, #e8e8e8 100%)",
+                boxShadow: "0 8px 40px rgba(0,0,0,0.12), 0 2px 10px rgba(0,0,0,0.08)",
+              }}
+            />
+            {/* Villa 2 image */}
+            <div className="relative w-[90%] h-[90%] -mt-[10%]">
+              <Image
+                src="/images/villa-render-2.jpg"
+                alt="Villa Moderna sul Mare"
+                fill
+                className="object-contain drop-shadow-2xl"
+              />
+            </div>
           </div>
         </div>
 
-        {/* ── Back Face ── */}
+        {/* Shadow on ground */}
         <div
-          className="absolute inset-0 rounded-3xl overflow-hidden"
+          className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-[70%] h-[20px] rounded-[50%]"
           style={{
-            backfaceVisibility: "hidden",
-            transform: `rotateY(180deg) translateZ(${thickness / 2}px)`,
-            boxShadow: "0 25px 60px -12px rgba(0,0,0,0.4)",
-          }}
-        >
-          <Image
-            src="/images/villa-render-2.jpg"
-            alt="Villa Moderna sul Mare"
-            fill
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-6">
-            <p className="text-white/70 text-sm font-medium mb-1">Costiera Amalfitana</p>
-            <h3 className="text-white text-2xl font-bold">Villa Belvedere</h3>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-amber-400 text-sm">★ 4.92</span>
-              <span className="text-white/60 text-sm">· 8 ospiti · Vista mare</span>
-            </div>
-            <p className="text-white font-bold text-lg mt-2">€ 520 <span className="text-white/60 font-normal text-sm">/ notte</span></p>
-          </div>
-        </div>
-
-        {/* ── 3D Edge (Top) ── */}
-        <div
-          className="absolute left-0 right-0"
-          style={{
-            top: 0, height: thickness,
-            background: "linear-gradient(180deg, #1a1a1a, #0a0a0a)",
-            transform: `rotateX(90deg) translateZ(-${thickness / 2}px)`,
-            transformOrigin: "top",
-            borderRadius: "24px 24px 0 0",
-          }}
-        />
-        {/* ── 3D Edge (Bottom) ── */}
-        <div
-          className="absolute left-0 right-0"
-          style={{
-            bottom: 0, height: thickness,
-            background: "linear-gradient(0deg, #1a1a1a, #0a0a0a)",
-            transform: `rotateX(-90deg) translateZ(-${thickness / 2}px)`,
-            transformOrigin: "bottom",
-            borderRadius: "0 0 24px 24px",
-          }}
-        />
-        {/* ── 3D Edge (Right) ── */}
-        <div
-          className="absolute top-0 bottom-0"
-          style={{
-            right: 0, width: thickness,
-            background: "linear-gradient(90deg, #1a1a1a, #0a0a0a)",
-            transform: `rotateY(90deg) translateZ(-${thickness / 2}px)`,
-            transformOrigin: "right",
-          }}
-        />
-        {/* ── 3D Edge (Left) ── */}
-        <div
-          className="absolute top-0 bottom-0"
-          style={{
-            left: 0, width: thickness,
-            background: "linear-gradient(-90deg, #1a1a1a, #0a0a0a)",
-            transform: `rotateY(-90deg) translateZ(-${thickness / 2}px)`,
-            transformOrigin: "left",
+            background: "radial-gradient(ellipse, rgba(0,0,0,0.15) 0%, transparent 70%)",
+            filter: "blur(6px)",
+            transition: "transform 1.2s cubic-bezier(0.25, 1, 0.5, 1)",
+            transform: flipped ? "scaleX(0.6)" : "scaleX(1)",
           }}
         />
       </div>
+
+      {/* Label */}
+      <p className="text-lg font-semibold text-neutral-900 transition-opacity duration-500">
+        {flipped ? "Modalità host" : "Modalità viaggio"}
+      </p>
     </div>
   );
 }
